@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>춘천시 AI 도우미 - 춘이 🌸</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 30px rgba(0,102,204,0.15);
+            overflow: hidden;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #ffffff;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 150px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        /* 배경 애니메이션 제거 */
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+        
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .header p {
+            font-size: 1rem;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            margin: 10px 20px;
+            max-width: 70%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .message-content {
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .message-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .bot-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .bot-avatar svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
+        }
+        
+        .bot-info {
+            flex: 1;
+        }
+        
+        .bot-name {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .user-message .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+        }
+        
+        .bot-message .message-content {
+            background: #f1f3f5;
+            color: #333;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 5px;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 20px;
+            margin: 10px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .typing-indicator.show {
+            display: flex;
+        }
+        
+        .typing-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .typing-avatar svg {
+            width: 25px;
+            height: 25px;
+            fill: white;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .typing-text {
+            flex: 1;
+        }
+        
+        .typing-dots {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #667eea;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .quick-questions {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            background: white;
+            overflow-x: auto;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        .quick-questions::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .quick-questions::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        .quick-questions::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .quick-question {
+            flex-shrink: 0;
+            padding: 10px 16px;
+            border: 2px solid #0066cc;
+            border-radius: 20px;
+            background: #f8f9fa;
+            color: #0066cc;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        
+        .quick-question:hover {
+            background: #0066cc;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+        
+        .typing-dots span {
+            animation: typingDot 1.4s infinite;
+            display: inline-block;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingDot {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        
+        #userInput {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #userInput:focus {
+            border-color: #0066cc;
+        }
+        
+        #sendBtn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #sendBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+        
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .bot-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .bot-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        
+        .bot-name {
+            font-weight: 600;
+            color: #0066cc;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Background circle -->
+                  <circle cx="100" cy="100" r="95" fill="#f5e6d3" stroke="#2c5282" stroke-width="4"/>
+                  <!-- Robot body -->
+                  <ellipse cx="100" cy="120" rx="60" ry="65" fill="#ffffff" stroke="#2c5282" stroke-width="3"/>
+                  <!-- Head/helmet -->
+                  <ellipse cx="100" cy="85" rx="45" ry="40" fill="#ffffff" stroke="#2c5282" stroke-width="3"/>
+                  <!-- Heart antenna -->
+                  <path d="M100,45 L100,35" stroke="#2c5282" stroke-width="2"/>
+                  <path d="M100,35 C100,30 95,25 90,30 C85,35 90,40 100,45 C110,40 115,35 110,30 C105,25 100,30 100,35" fill="#5a9fd4"/>
+                  <!-- Eyes -->
+                  <ellipse cx="85" cy="85" rx="6" ry="10" fill="#2c5282"/>
+                  <ellipse cx="115" cy="85" rx="6" ry="10" fill="#2c5282"/>
+                  <!-- Cheeks -->
+                  <circle cx="70" cy="95" r="8" fill="#ffb3ba" opacity="0.7"/>
+                  <circle cx="130" cy="95" r="8" fill="#ffb3ba" opacity="0.7"/>
+                  <!-- Mouth -->
+                  <path d="M85,105 Q100,115 115,105" stroke="#2c5282" stroke-width="2" fill="none" stroke-linecap="round"/>
+                  <!-- Arms -->
+                  <ellipse cx="60" cy="120" rx="12" ry="30" fill="#ffffff" stroke="#2c5282" stroke-width="2" transform="rotate(-20 60 120)"/>
+                  <ellipse cx="140" cy="120" rx="12" ry="30" fill="#ffffff" stroke="#2c5282" stroke-width="2" transform="rotate(20 140 120)"/>
+                  <!-- Badge -->
+                  <text x="100" y="130" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#2c5282">춘이</text>
+                </svg>
+            </div>
+            <h1>춘천시 AI 헬퍼 춘이</h1>
+            <p>춘천시 관광, 행사, 맛집 정보를 실시간으로 알려드려요!</p>
+        </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-message">
+                    <p> 안녕하세요! 춘천시 AI 헬퍼 <strong>춘이</strong>입니다!</p>
+                    <p>춘천의 관광, 맛집, 행사, 정책 등 뭐든지 물어보세요!</p>
+                    <p>예를 들어 이런 걸 물어보실 수 있어요:</p>
+                    <ul style="text-align: left; display: inline-block; margin-top: 10px;">
+                        <li>이번주 춘천 행사 뭐 있어?</li>
+                        <li>춘천 닭갈비 맛집 추천해줘</li>
+                        <li>춘천 전기차 충전소 어디 있어?</li>
+                        <li>춘천시 청년 정책 알려줘</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="quick-questions" id="quickQuestions">
+                <!-- 빠른 질문들이 여기에 동적으로 추가됩니다 -->
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="춘천에 대해 뭐든지 물어보세요..." autocomplete="off">
+                </div>
+                <button id="sendBtn">전송</button>
+            </div>
+        </div>
+        
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const quickQuestionsContainer = document.getElementById('quickQuestions');
+        
+        // 메시지 추가
+        function addMessage(message, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            if (isUser) {
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = message;
+                messageDiv.appendChild(contentDiv);
+            } else {
+                // 봇 메시지는 프로필과 이름 포함
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.className = 'message-wrapper';
+                
+                // 아바타
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'bot-avatar';
+                avatarDiv.innerHTML = `
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="35" r="20" fill="white"/>
+                        <ellipse cx="50" cy="70" rx="25" ry="20" fill="white"/>
+                        <circle cx="42" cy="32" r="3" fill="#333"/>
+                        <circle cx="58" cy="32" r="3" fill="#333"/>
+                        <path d="M 45 40 Q 50 45, 55 40" stroke="#333" stroke-width="2" fill="none"/>
+                    </svg>
+                `;
+                
+                // 메시지 컨테이너
+                const messageContainer = document.createElement('div');
+                messageContainer.style.flex = '1';
+                
+                // 이름 영역
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'bot-name';
+                nameDiv.textContent = '춘이';
+                nameDiv.style.marginBottom = '5px';
+                
+                // 메시지 내용 (개행 처리)
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                // 개행 문자 처리 및 마크다운 스타일 처리
+                const formattedMessage = message
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // 볼드 처리
+                    .replace(/\n/g, '<br>'); // 개행 처리
+                contentDiv.innerHTML = formattedMessage;
+                
+                messageContainer.appendChild(nameDiv);
+                messageContainer.appendChild(contentDiv);
+                
+                wrapperDiv.appendChild(avatarDiv);
+                wrapperDiv.appendChild(messageContainer);
+                
+                messageDiv.appendChild(wrapperDiv);
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+            
+            // 타이핑 인디케이터 추가
+            function showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator show';
+                typingDiv.id = 'typing-indicator';
+                typingDiv.innerHTML = `
+                    <div class="typing-avatar">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="35" r="20" fill="white"/>
+                            <ellipse cx="50" cy="70" rx="25" ry="20" fill="white"/>
+                            <circle cx="42" cy="32" r="3" fill="#333"/>
+                            <circle cx="58" cy="32" r="3" fill="#333"/>
+                            <path d="M 45 40 Q 50 45, 55 40" stroke="#333" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="typing-text">
+                        <strong>춘이가 생각중</strong>
+                        <div class="typing-dots">
+                            <span style="animation-delay: 0s"></span>
+                            <span style="animation-delay: 0.2s"></span>
+                            <span style="animation-delay: 0.4s"></span>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(typingDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            function removeTypingIndicator() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) typingIndicator.remove();
+            }
+        
+            // 메시지 전송
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // 사용자 메시지 추가
+                addMessage(message, true);
+                userInput.value = '';
+                
+                // 전송 버튼 비활성화
+                sendBtn.disabled = true;
+                sendBtn.textContent = '전송중...';
+                
+                // 타이핑 인디케이터 표시
+                showTypingIndicator();
+                
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'same-origin',  // 세션 쿠키 포함
+                        body: JSON.stringify({ message: message })
+                    });
+                
+                const data = await response.json();
+                
+                removeTypingIndicator();
+                
+                if (data.success) {
+                    addMessage(data.message);
+                } else {
+                    addMessage(data.message || '죄송해요, 뭔가 문제가 생겼어요 ㅠㅠ 다시 한번 시도해주세요!');
+                    console.error('Error response:', data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('앗, 서버 연결에 문제가 있네요 ㅠㅠ 잠시 후 다시 시도해주세요!');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '전송';
+            }
+        }
+        
+        // 빠른 질문 전송
+        function sendQuickQuestion(question) {
+            userInput.value = question;
+            sendMessage();
+        }
+        
+        // 이벤트 리스너
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // 빠른 질문 로드
+        function loadQuickQuestions() {
+            const questions = [
+                '🎉 이번주 춘천 행사',
+                '🍗 춘천 닭갈비 맛집',
+                '⚡ 전기차 충전소 위치',
+                '🏞️ 춘천 관광지 추천',
+                '👨‍👩‍👧‍👦 춘천시 청년 정책',
+                '☕ 춘천 카페 추천',
+                '🚌 춘천 버스 노선',
+                '🏨 춘천 숙박시설',
+                '🎣 춘천 레저 활동',
+                '🏥 춘천 병원 정보'
+            ];
+            
+            quickQuestionsContainer.innerHTML = '';
+            questions.forEach(q => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-question';
+                btn.textContent = q;
+                btn.onclick = () => sendQuickQuestion(q);
+                quickQuestionsContainer.appendChild(btn);
+            });
+        }
+        
+        // 초기화
+        loadQuickQuestions();
+        
+        // 서버 초기화 요청
+        fetch('/initialize', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('statusText').textContent = '✅ 시스템 준비 완료';
+                    console.log('챗봇 초기화 성공');
+                }
+            })
+            .catch(error => {
+                console.error('초기화 실패:', error);
+                document.getElementById('statusText').textContent = '⚠️ 초기화 중...';
+            });
+    </script>
+</body>
+</html>
