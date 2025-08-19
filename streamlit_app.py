@@ -6,6 +6,7 @@ import streamlit as st
 import os
 from datetime import datetime
 import uuid
+from typing import List, Dict, Any
 
 # AI 라이브러리 import
 try:
