@@ -306,25 +306,27 @@ class EnhancedChuncheonChatbot:
 당신은 춘천시 전문 AI 도우미 '춘이'입니다.
 
 **중요 지침:**
-1. 반드시 제공된 춘천시 데이터와 Perplexity 검색 결과만을 사용하여 답변하세요.
-2. 확실하지 않은 정보는 추측하지 말고 "정확한 정보를 찾지 못했습니다"라고 말하세요.
-3. 답변은 친근하고 도움이 되도록 작성하세요.
-4. 춘천시와 관련 없는 질문에는 "춘천시 관련 질문만 답변드릴 수 있습니다"라고 응답하세요.
-5. 지도나 거리 관련 질문에는 "정확한 위치나 거리는 네이버 지도나 카카오맵을 이용해주세요"라고 안내하세요.
+1. 춘천, 춘천시와 관련된 모든 질문에 적극적으로 답변하세요.
+2. 카페, 맛집, 관광지, 정책, 교통, 충전소 등 춘천 지역의 모든 정보를 도움을 드립니다.
+3. 제공된 데이터와 웹 검색 결과를 활용하여 최대한 유용한 정보를 제공하세요.
+4. 정확한 정보가 없더라도 일반적인 춘천 관련 조언이나 추천을 해주세요.
+5. 춘천과 전혀 관계없는 질문(예: 서울 맛집, 부산 여행)에만 "춘천시 관련 질문만 답변드릴 수 있습니다"라고 응답하세요.
 
 **춘천시 기본 정보:**
-- 대표 음식: 닭갈비, 막국수
-- 주요 관광지: 남이섬, 소양강댐, 춘천호
+- 대표 음식: 닭갈비, 막국수, 소양강 처녀막국수
+- 주요 관광지: 남이섬, 소양강댐, 춘천호, 김유정문학촌, 애니메이션박물관
+- 카페 거리: 춘천 명동, 온의동 카페거리
 - 시청 전화: 033-250-3000
 - 춘천역: 1544-7788
-- 강원대학교 춘천캠퍼스 총장: 김헌영 (2023년 기준)
-- 한림대학교: 춘천시 한림대학길 1
+- 강원대학교 춘천캠퍼스, 한림대학교: 춘천시 한림대학길 1
 
 **제공된 데이터:**
 {context}
 
-**Perplexity 검색 결과:**
+**웹 검색 결과:**
 {web_search}
+
+위 정보를 바탕으로 춘천시에 대한 질문에 친근하고 도움이 되는 답변을 해주세요.
             """),
             ("human", "{question}")
         ])
@@ -361,13 +363,19 @@ class EnhancedChuncheonChatbot:
     
     def _get_perplexity_search_results(self, query: str) -> str:
         """Perplexity API를 사용한 웹 검색"""
-        # Perplexity API 키가 없으면 로컬 데이터만 사용
         if not self.perplexity_api_key:
             return "로컬 데이터만 사용합니다."
-            
+        
         try:
-            # 춘천 관련 검색어로 보강
-            enhanced_query = f"춘천시 {query} 2024 2025 최신 정보"
+            # 춘천 관련 검색어로 강화 - 더 구체적으로
+            if "카페" in query:
+                enhanced_query = f"춘천시 추천 카페 맛집 명동 온의동 카페거리 2024 2025"
+            elif "청년" in query and "정책" in query:
+                enhanced_query = f"춘천시 청년정책 청년일자리 청년창업 지원사업 2024 2025"
+            elif "전기차" in query or "충전소" in query:
+                enhanced_query = f"춘천시 전기차 충전소 위치 현황 2024 2025"
+            else:
+                enhanced_query = f"춘천시 {query} 2024 2025 최신 정보"
             
             url = "https://api.perplexity.ai/chat/completions"
             headers = {
@@ -380,7 +388,7 @@ class EnhancedChuncheonChatbot:
                 "messages": [
                     {
                         "role": "system",
-                        "content": "당신은 춘천시 정보 전문가입니다. 최신 정보를 정확하고 간결하게 제공해주세요."
+                        "content": "춘천시에 대한 정확하고 구체적인 최신 정보를 제공해주세요. 가능한 한 상세한 정보(주소, 전화번호, 운영시간 등)를 포함하여 한국어로 답변하세요."
                     },
                     {
                         "role": "user", 
@@ -388,10 +396,20 @@ class EnhancedChuncheonChatbot:
                     }
                 ],
                 "max_tokens": 500,
-                "temperature": 0.2
+                "temperature": 0.1,
+                "top_p": 0.9,
+                "return_citations": True,
+                "search_domain_filter": ["naver.com", "daum.net", "chuncheon.go.kr", "gangwon.go.kr"],
+                "return_images": False,
+                "return_related_questions": False,
+                "search_recency_filter": "month",
+                "top_k": 0,
+                "stream": False,
+                "presence_penalty": 0,
+                "frequency_penalty": 1
             }
             
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=15)
             
             if response.status_code == 200:
                 result = response.json()
