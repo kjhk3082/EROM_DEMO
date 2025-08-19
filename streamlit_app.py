@@ -361,74 +361,61 @@ def main():
                     with st.chat_message("user"):
                         st.write(message["content"])
         
-        # 빠른 질문 버튼들
-        st.markdown("### 🚀 빠른 질문")
+        # 빠른 질문 버튼들 (접을 수 있음)
+        with st.expander("🚀 빠른 질문", expanded=True):
+            # 2행 4열로 배치
+            row1_cols = st.columns(4)
+            row2_cols = st.columns(4)
         
-        # 2행 4열로 배치
-        row1_cols = st.columns(4)
-        row2_cols = st.columns(4)
-        
-        quick_questions = [
-            "춘천 닭갈비 맛집 추천해줘",
-            "이번 주 춘천 행사 뭐 있어?",
-            "춘천 전기차 충전소 어디 있어?",
-            "춘천 관광지 추천해줘",
-            "춘천시 청년 정책 알려줘",
-            "춘천 카페 추천해줘",
-            "춘천 숙박시설 알려줘",
-            "시청 연락처 알려줘"
-        ]
-        
-        # 첫 번째 행
-        for i, question in enumerate(quick_questions[:4]):
-            with row1_cols[i]:
-                if st.button(question, key=f"quick_{i}"):
-                    # 1. 사용자 질문 추가 및 표시
-                    st.session_state.messages.append({"role": "user", "content": question})
-                    st.rerun()
-                    
-                    # 2. 로딩 메시지 추가 및 표시
-                    st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
-                    st.rerun()
-                    
-                    # 3. AI 응답 생성 및 교체
-                    response = chatbot.generate_response(question)
-                    st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                    st.rerun()
-        
-        # 두 번째 행
-        for i, question in enumerate(quick_questions[4:]):
-            with row2_cols[i]:
-                if st.button(question, key=f"quick_{i+4}"):
-                    # 1. 사용자 질문 추가 및 표시
-                    st.session_state.messages.append({"role": "user", "content": question})
-                    st.rerun()
-                    
-                    # 2. 로딩 메시지 추가 및 표시
-                    st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
-                    st.rerun()
-                    
-                    # 3. AI 응답 생성 및 교체
-                    response = chatbot.generate_response(question)
-                    st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                    st.rerun()
+            quick_questions = [
+                "춘천 닭갈비 맛집 추천해줘",
+                "이번 주 춘천 행사 뭐 있어?",
+                "춘천 전기차 충전소 어디 있어?",
+                "춘천 관광지 추천해줘",
+                "춘천시 청년 정책 알려줘",
+                "춘천 카페 추천해줘",
+                "춘천 숙박시설 알려줘",
+                "시청 연락처 알려줘"
+            ]
+            
+            # 첫 번째 행
+            for i, question in enumerate(quick_questions[:4]):
+                with row1_cols[i]:
+                    if st.button(question, key=f"quick_{i}"):
+                        # 1. 사용자 질문 추가
+                        st.session_state.messages.append({"role": "user", "content": question})
+                        
+                        # 2. AI 응답 생성 및 추가
+                        response = chatbot.generate_response(question)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+                        
+                        st.rerun()
+            
+            # 두 번째 행
+            for i, question in enumerate(quick_questions[4:]):
+                with row2_cols[i]:
+                    if st.button(question, key=f"quick_{i+4}"):
+                        # 1. 사용자 질문 추가
+                        st.session_state.messages.append({"role": "user", "content": question})
+                        
+                        # 2. AI 응답 생성 및 추가
+                        response = chatbot.generate_response(question)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+                        
+                        st.rerun()
         
         # 채팅 입력
         st.markdown("### 💬 직접 질문하기")
         user_input = st.chat_input("춘천에 대해 뭐든지 물어보세요...")
         
         if user_input:
-            # 1. 사용자 질문 추가 및 표시
+            # 1. 사용자 질문 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
-            st.rerun()
             
-            # 2. 로딩 메시지 추가 및 표시
-            st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
-            st.rerun()
-            
-            # 3. AI 응답 생성 및 교체
+            # 2. AI 응답 생성 및 추가
             response = chatbot.generate_response(user_input)
-            st.session_state.messages[-1] = {"role": "assistant", "content": response}
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
             st.rerun()
     
     # 하단 정보
