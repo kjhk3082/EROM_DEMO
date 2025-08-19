@@ -321,6 +321,8 @@ def main():
         st.session_state.messages = []
     if 'chatbot_ready' not in st.session_state:
         st.session_state.chatbot_ready = False
+    if 'footer_visible' not in st.session_state:
+        st.session_state.footer_visible = True
     
     # 헤더
     st.markdown("""
@@ -382,26 +384,34 @@ def main():
             for i, question in enumerate(quick_questions[:4]):
                 with row1_cols[i]:
                     if st.button(question, key=f"quick_{i}"):
-                        # 1. 사용자 질문 추가
+                        # 1. 사용자 질문 추가 및 표시
                         st.session_state.messages.append({"role": "user", "content": question})
+                        st.rerun()
                         
-                        # 2. AI 응답 생성 및 추가
+                        # 2. 로딩 메시지 추가 및 표시
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        st.rerun()
+                        
+                        # 3. AI 응답 생성 및 교체
                         response = chatbot.generate_response(question)
-                        st.session_state.messages.append({"role": "assistant", "content": response})
-                        
+                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
                         st.rerun()
             
             # 두 번째 행
             for i, question in enumerate(quick_questions[4:]):
                 with row2_cols[i]:
                     if st.button(question, key=f"quick_{i+4}"):
-                        # 1. 사용자 질문 추가
+                        # 1. 사용자 질문 추가 및 표시
                         st.session_state.messages.append({"role": "user", "content": question})
+                        st.rerun()
                         
-                        # 2. AI 응답 생성 및 추가
+                        # 2. 로딩 메시지 추가 및 표시
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        st.rerun()
+                        
+                        # 3. AI 응답 생성 및 교체
                         response = chatbot.generate_response(question)
-                        st.session_state.messages.append({"role": "assistant", "content": response})
-                        
+                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
                         st.rerun()
         
         # 채팅 입력
@@ -409,30 +419,40 @@ def main():
         user_input = st.chat_input("춘천에 대해 뭐든지 물어보세요...")
         
         if user_input:
-            # 1. 사용자 질문 추가
+            # 1. 사용자 질문 추가 및 표시
             st.session_state.messages.append({"role": "user", "content": user_input})
+            st.rerun()
             
-            # 2. AI 응답 생성 및 추가
+            # 2. 로딩 메시지 추가 및 표시
+            st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
+            st.rerun()
+            
+            # 3. AI 응답 생성 및 교체
             response = chatbot.generate_response(user_input)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            
+            st.session_state.messages[-1] = {"role": "assistant", "content": response}
             st.rerun()
     
-    # 하단 정보
-    st.markdown("""
-    <div class="footer-info">
-        <p>🌸 <strong>춘천시 AI 도우미 춘이</strong> - 2025년 프롬프톤 출품작 🌸</p>
-        <p>개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</p>
-        <p>🏛️ 춘천시 주요 정보:
-- 닭갈비: 춘천의 대표 음식, 중앙로 일대에 많은 맛집
-- 막국수: 춘천의 또 다른 특산품
-- 남이섬: 대표적인 관광지
-- 소양강댐: 춘천의 랜드마크
-- 춘천시청: 033-250-3000
-- 강원대학교: 춘천캠퍼스 위치, 총장은 김헌영 (2023년 기준)
-- 한림대학교: 춘천시 한림대학길 1 위치 | 🚂 춘천역: 1544-7788 | 🍗 특산품: 닭갈비, 막국수</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # 하단 정보 (토글 가능)
+    if st.button("ℹ️ 춘천시 정보" if not st.session_state.footer_visible else "📄 정보 접기", key="footer_toggle"):
+        st.session_state.footer_visible = not st.session_state.footer_visible
+        st.rerun()
+    
+    if st.session_state.footer_visible:
+        st.markdown("""
+        <div class="footer-info">
+            <p>🌸 <strong>춘천시 AI 도우미 춘이</strong> - 2025년 프롬프톤 출품작 🌸</p>
+            <p>개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</p>
+            <p>🏛️ 춘천시 주요 정보:</p>
+            <p>- 닭갈비: 춘천의 대표 음식, 중앙로 일대에 많은 맛집</p>
+            <p>- 막국수: 춘천의 또 다른 특산품</p>
+            <p>- 남이섬: 대표적인 관광지</p>
+            <p>- 소양강댐: 춘천의 랜드마크</p>
+            <p>- 춘천시청: 033-250-3000</p>
+            <p>- 강원대학교: 춘천캠퍼스 위치, 총장은 김헌영 (2023년 기준)</p>
+            <p>- 한림대학교: 춘천시 한림대학길 1 위치</p>
+            <p>- 🚂 춘천역: 1544-7788 | 🍗 특산품: 닭갈비, 막국수</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
