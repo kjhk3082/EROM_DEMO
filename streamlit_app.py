@@ -354,8 +354,12 @@ def main():
         chat_container = st.container()
         with chat_container:
             for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.write(message["content"])
+                if message["role"] == "assistant":
+                    with st.chat_message("assistant", avatar="🌸"):
+                        st.markdown(f"**춘이:** {message['content']}")
+                else:
+                    with st.chat_message("user"):
+                        st.write(message["content"])
         
         # 빠른 질문 버튼들
         st.markdown("### 🚀 빠른 질문")
@@ -382,7 +386,7 @@ def main():
                     st.session_state.messages.append({"role": "user", "content": question})
                     
                     # AI 응답 생성
-                    with st.spinner("춘이가 생각중..."):
+                    with st.spinner("🌸 춘이가 생각중..."):
                         response = chatbot.generate_response(question)
                         st.session_state.messages.append({"role": "assistant", "content": response})
                     
@@ -395,7 +399,7 @@ def main():
                     st.session_state.messages.append({"role": "user", "content": question})
                     
                     # AI 응답 생성
-                    with st.spinner("춘이가 생각중..."):
+                    with st.spinner("🌸 춘이가 생각중..."):
                         response = chatbot.generate_response(question)
                         st.session_state.messages.append({"role": "assistant", "content": response})
                     
@@ -410,7 +414,7 @@ def main():
             st.session_state.messages.append({"role": "user", "content": user_input})
             
             # AI 응답 생성 및 세션에 저장
-            with st.spinner("춘이가 답변을 생성하고 있습니다..."):
+            with st.spinner("🌸 춘이가 답변을 생성하고 있습니다..."):
                 response = chatbot.generate_response(user_input)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             
