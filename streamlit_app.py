@@ -17,8 +17,9 @@ from typing import List, Dict, Any
 # AI 라이브러리 import
 try:
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    from langchain_community.vectorstores import Chroma
+    from langchain_community.vectorstores import FAISS
     from langchain_community.retrievers import TavilySearchAPIRetriever
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     from langchain_core.prompts import ChatPromptTemplate
     from langchain.text_splitter import RecursiveCharacterTextSplitter
     from langchain.schema import Document
@@ -181,8 +182,11 @@ class EnhancedStreamlitChatbot:
         self.data_loader = ChuncheonDataLoader()
         self.api_client = ChuncheonAPIClient(PUBLIC_API_KEY)
         
-        # 임베딩 및 벡터스토어 초기화
-        self.embeddings = OpenAIEmbeddings()
+        # 임베딩 및 벡터스토어 초기화 (FAISS 사용)
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="jhgan/ko-sroberta-multitask",
+            model_kwargs={'device': 'cpu'}
+        )
         self.vector_store = None
         self.retriever = None
         
@@ -256,17 +260,21 @@ class EnhancedStreamlitChatbot:
         # CSV 파일 로드
         self.data_loader.load_csv_files(csv_folder)
         
-        # 벡터스토어 생성
+        # FAISS 벡터스토어 생성 (SQLite 버전 문제 해결)
         documents = self.data_loader.get_documents()
         if documents:
-            self.vector_store = Chroma.from_documents(
-                documents=documents,
-                embedding=self.embeddings,
-                persist_directory="./chroma_db"
+            # 텍스트 분할
+            split_docs = self.data_loader.text_splitter.split_documents(documents)
+            st.write(f"📄 {len(split_docs)}개 청크로 분할 완료")
+            
+            # FAISS 벡터스토어 생성
+            self.vector_store = FAISS.from_documents(
+                split_docs,
+                self.embeddings
             )
             # retriever 생성
             self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
-            st.write(f"✅ 벡터스토어 생성 완료 ({len(documents)}개 문서)")
+            st.write(f"✅ FAISS 벡터스토어 생성 완료 ({len(documents)}개 문서)")
         else:
             st.write("⚠️ 로드된 문서가 없습니다")
     

@@ -1,8 +1,8 @@
-# Streamlit Cloud 호환성 최우선 버전 (2025-08-19 업데이트)
+# Streamlit Cloud 호환 버전
 streamlit>=1.31.0
 python-dotenv>=1.0.0
 
-# AI/ML 라이브러리 (Python 3.13 호환)
+# AI/ML 라이브러리 (호환 버전)
 openai>=1.40.0
 langchain>=0.2.14
 langchain-openai>=0.1.20
@@ -10,12 +10,12 @@ langchain-community>=0.2.12
 langchain-core>=0.2.32
 langchain-text-splitters>=0.2.0
 
-# 데이터 처리 (Python 3.13 빌드 오류 해결)
+# 데이터 처리 (Python 3.13 호환)
 pandas>=2.2.0
 numpy>=1.26.0
 
-# 벡터 데이터베이스 (SQLite 버전 문제로 FAISS 사용)
-faiss-cpu>=1.7.4
+# 벡터 데이터베이스
+chromadb>=0.4.22
 tiktoken>=0.8.0
 
 # 추가 기능
