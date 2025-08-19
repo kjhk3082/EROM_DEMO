@@ -74,10 +74,11 @@ class ChuncheonDataLoader:
                 # 데이터프레임을 문서로 변환
                 self._convert_df_to_documents(df, data_type)
                 
-                st.write(f"✅ {file_name} 로드 완료 ({len(df)}개 행)")
+                # st.write(f"✅ {file_name} 로드 완료 ({len(df)}개 행)")  # 로딩 메시지 최소화
                 
             except Exception as e:
-                st.write(f"❌ {file_name} 로드 실패: {e}")
+                # st.write(f"❌ {file_name} 로드 실패: {e}")  # 에러 메시지 최소화
+                pass
     
     def _convert_df_to_documents(self, df: pd.DataFrame, data_type: str):
         """데이터프레임을 LangChain Document로 변환"""
@@ -254,26 +255,23 @@ class EnhancedStreamlitChatbot:
         self.prompt = ChatPromptTemplate.from_template(self.prompt_template)
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
     
-    def initialize(self, csv_folder: str):
-        """챗봇 초기화 - CSV 데이터 로드 및 벡터스토어 생성"""
+    def initialize(self, csv_folders: list):
+        """챗봇 초기화 - 여러 CSV 폴더에서 데이터 로드 및 벡터스토어 생성"""
         st.write("🚀 춘천시 RAG 챗봇 초기화 중...")
         
-        # CSV 파일 로드
-        self.data_loader.load_csv_files(csv_folder)
+        # 여러 CSV 폴더에서 파일 로드
+        for folder in csv_folders:
+            if os.path.exists(folder):
+                st.write(f"📁 {folder} 폴더 로드 중...")
+                self.data_loader.load_csv_files(folder)
         
-        # FAISS 벡터스토어 생성 (SQLite 버전 문제 해결)
+        # FAISS 벡터스토어 생성
         documents = self.data_loader.get_documents()
         if documents:
-            # 텍스트 분할
             split_docs = self.data_loader.text_splitter.split_documents(documents)
             st.write(f"📄 {len(split_docs)}개 청크로 분할 완료")
             
-            # FAISS 벡터스토어 생성
-            self.vector_store = FAISS.from_documents(
-                split_docs,
-                self.embeddings
-            )
-            # retriever 생성
+            self.vector_store = FAISS.from_documents(split_docs, self.embeddings)
             self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
             st.write(f"✅ FAISS 벡터스토어 생성 완료 ({len(documents)}개 문서)")
         else:
@@ -444,21 +442,43 @@ st.set_page_config(
 # Flask 웹 디자인과 매칭되는 CSS 스타일링
 st.markdown("""
 <style>
-    /* 전체 페이지 스타일 */
+    /* 전체 페이지 스타일 - HTML 버전과 매칭 */
     .main > div {
         padding-top: 1rem;
         padding-bottom: 0rem;
+        max-width: 900px;
+        margin: 0 auto;
     }
     
-    /* 헤더 스타일 - Flask 버전과 동일 */
-    .chuni-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 25px 20px;
+    /* Streamlit 컨테이너 전체 높이 설정 */
+    .stApp {
+        background: #f3f4f6;
+    }
+    
+    .block-container {
+        max-width: 900px !important;
+        padding: 20px !important;
+        background: white;
         border-radius: 15px;
+        box-shadow: 0 5px 30px rgba(0,102,204,0.15);
+        margin: 20px auto !important;
+        min-height: 90vh;
+    }
+    
+    /* 헤더 스타일 - HTML 버전과 완전 동일 */
+    .chuni-header {
+        background: #ffffff;
+        color: #333;
+        padding: 30px;
+        border-radius: 20px 20px 0 0;
         text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 150px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 0;
     }
     
     .chuni-logo {
@@ -474,15 +494,16 @@ st.markdown("""
     }
     
     .chuni-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 700;
         margin: 10px 0 5px 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        color: #0066cc;
     }
     
     .chuni-subtitle {
-        font-size: 0.9rem;
-        opacity: 0.9;
+        font-size: 1rem;
+        color: #6b7280;
+        margin-top: 8px;
         margin-bottom: 10px;
     }
     
@@ -490,17 +511,18 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         background: rgba(255,255,255,0.2);
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-top: 10px;
+        font-size: 0.85rem;
     }
     
     .status-dot {
-        width: 6px;
-        height: 6px;
+        width: 8px;
+        height: 8px;
         background: #4ade80;
         border-radius: 50%;
-        margin-right: 5px;
+        margin-right: 8px;
         animation: pulse 2s infinite;
     }
     
@@ -509,15 +531,15 @@ st.markdown("""
         50% { opacity: 0.5; }
     }
     
-    /* 채팅 컨테이너 - 고정 높이 및 스크롤 */
+    /* 채팅 컨테이너 - 동적 높이, 회색 배경 제거 */
     .chat-container {
-        height: 400px;
+        min-height: 200px;
+        max-height: 60vh;
         overflow-y: auto;
         padding: 15px;
-        background: #fafafa;
+        background: transparent;
         border-radius: 10px;
         margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
     }
     
     /* 채팅 메시지 스타일 */
@@ -738,36 +760,39 @@ def display_chuni_header():
     """, unsafe_allow_html=True)
 
 def display_quick_questions():
-    """빠른 질문 버튼들 표시 - 입력창 위에 고정"""
-    st.markdown("""
-    <div class="quick-questions-container">
-        <p class="quick-questions-header">🚀 빠른 질문</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Enhanced 버전과 동일한 질문들
+    """빠른 질문 버튼들 표시 - HTML 버전과 동일한 스타일"""
+    # HTML 버전과 동일한 질문들
     quick_questions = [
-        {"icon": "🍗", "text": "춘천 닭갈비 맛집 어디가 진짜 맛있어?"},
-        {"icon": "🎉", "text": "이번 주 춘천에서 뭐 재밌는 행사 있어?"},
-        {"icon": "💉", "text": "독감 예방접종 어디서 할 수 있어?"},
-        {"icon": "🏛️", "text": "주민등록등본 떼려면 어디로 가야해?"},
-        {"icon": "🚗", "text": "춘천에 전기차 충전소 많아?"},
-        {"icon": "🌸", "text": "봄에 가볼만한 춘천 명소 추천해줘"},
-        {"icon": "👴", "text": "우리 할머니 일자리 프로그램 있을까?"},
-        {"icon": "📞", "text": "시청 민원실 전화번호 알려줘"}
+        "🍗 춘천 닭갈비 맛집 어디...",
+        "🎉 이번 주 춘천에서 뭐...",
+        "🖊️ 독감 예방접종 어디서...",
+        "🏛️ 주민등록등본 떼려면 어...",
+        "🚗 춘천에 전기차 충전소...",
+        "🌸 봄에 가볼만한 춘천명...",
+        "👴 우리 할머니 일자리프...",
+        "📞 시청 민원실 전화번호..."
     ]
     
-    # 4열로 배치 (텍스트 포함, 작은 크기)
-    cols = st.columns(4)
-    for i, q in enumerate(quick_questions):
-        col = cols[i % 4]
+    full_questions = [
+        "춘천 닭갈비 맛집 어디가 진짜 맛있어?",
+        "이번 주 춘천에서 뭐 재밌는 행사 있어?",
+        "독감 예방접종 어디서 할 수 있어?",
+        "주민등록등본 떼려면 어디로 가야해?",
+        "춘천에 전기차 충전소 많아?",
+        "봄에 가볼만한 춘천 명소 추천해줘",
+        "우리 할머니 일자리 프로그램 있을까?",
+        "시청 민원실 전화번호 알려줘"
+    ]
+    
+    # HTML 버전과 동일한 레이아웃 - 2행 4열
+    cols1 = st.columns(4)
+    cols2 = st.columns(4)
+    
+    for i, (short_q, full_q) in enumerate(zip(quick_questions, full_questions)):
+        col = cols1[i] if i < 4 else cols2[i-4]
         with col:
-            # 텍스트를 줄여서 표시
-            short_text = q['text'][:12] + "..." if len(q['text']) > 12 else q['text']
-            if st.button(f"{q['icon']} {short_text}", key=f"quick_{i}", use_container_width=True, help=q['text']):
-                # 즉시 사용자 메시지 추가
-                st.session_state.messages.append({"role": "user", "content": q['text']})
-                # 타이핑 인디케이터 추가
+            if st.button(short_q, key=f"quick_{i}", use_container_width=True):
+                st.session_state.messages.append({"role": "user", "content": full_q})
                 st.session_state.messages.append({"role": "typing", "content": "춘이가 생각중입니다..."})
                 st.rerun()
 
@@ -807,22 +832,48 @@ def display_chat_message(message, is_user=False, is_typing=False):
         """, unsafe_allow_html=True)
 
 def initialize_chatbot():
-    """실제 AI 챗봇 초기화"""
+    """미리 준비된 AI 챗봇 - 사용자 대기시간 제거"""
     if 'chatbot' not in st.session_state:
         try:
-            with st.spinner("춘이 AI를 깨우는 중입니다... 🤖"):
-                st.session_state.chatbot = EnhancedStreamlitChatbot()
-                # 민원 관련 데이터로 초기화
-                st.session_state.chatbot.initialize("./민원 관련")
+            # 캐시된 챗봇 즉시 로드 (이미 준비됨)
+            chatbot, success = get_cached_chatbot()
+            if success:
+                st.session_state.chatbot = chatbot
                 st.session_state.chatbot_ready = True
                 st.session_state.session_id = str(uuid.uuid4())
-                st.success("✅ 춘이 AI가 준비되었습니다!")
+                # 성공 메시지 제거 - 즉시 사용 가능
+            else:
+                raise Exception(chatbot)
         except Exception as e:
             st.session_state.chatbot_ready = False
             st.session_state.error_message = str(e)
             st.error(f"❌ 춘이 AI 초기화 실패: {e}")
             if "OPENAI_API_KEY" not in os.environ or not os.environ["OPENAI_API_KEY"]:
                 st.info("💡 Streamlit Cloud Secrets에 OPENAI_API_KEY를 설정해주세요.")
+
+@st.cache_resource
+def get_cached_chatbot():
+    """미리 로드된 챗봇 인스턴스 - 사용자가 기다리지 않도록 사전 초기화"""
+    try:
+        # 백그라운드에서 미리 초기화
+        chatbot = EnhancedStreamlitChatbot()
+        
+        # 모든 데이터 폴더에서 로드
+        folders = ["./민원 관련", "./dataSet", "./dataset2"]
+        for folder in folders:
+            if os.path.exists(folder):
+                chatbot.data_loader.load_csv_files(folder)
+        
+        # 벡터스토어 미리 생성
+        documents = chatbot.data_loader.get_documents()
+        if documents:
+            split_docs = chatbot.data_loader.text_splitter.split_documents(documents)
+            chatbot.vector_store = FAISS.from_documents(split_docs, chatbot.embeddings)
+            chatbot.retriever = chatbot.vector_store.as_retriever(search_kwargs={"k": 5})
+        
+        return chatbot, True
+    except Exception as e:
+        return None, str(e)
 
 def initialize_session_state():
     """세션 상태 초기화"""
@@ -865,37 +916,43 @@ def main():
     # 챗봇 초기화
     initialize_chatbot()
     
-    # 챗봇 상태 확인
+    # 챗봇 상태 확인 - 에러시에만 표시
     if not st.session_state.chatbot_ready:
-        st.warning("⚠️ 춘이 AI를 준비하고 있습니다. 잠시만 기다려주세요...")
+        st.error("❌ 춘이 AI 초기화에 실패했습니다.")
         st.info("💡 API 키가 올바르게 설정되어 있는지 확인해주세요.")
         return
     
-    # 환영 메시지 (메시지가 없을 때만)
-    if not st.session_state.messages:
-        st.markdown("""
-        <div style="text-align: center; padding: 25px; background: #f8f9fa; border-radius: 10px; margin-bottom: 15px;">
-            <h4 style="color: #667eea; margin-bottom: 10px;">안녕하세요! 춘천시 AI 헬퍼 <strong>춘이</strong>입니다! 🌸</h4>
-            <p style="color: #6b7280; margin-bottom: 8px; font-size: 0.9rem;">춘천의 관광, 맛집, 행사, 정책 등 뭐든지 물어보세요!</p>
-        </div>
-        """, unsafe_allow_html=True)
+    # 환영 메시지 제거 - HTML 버전처럼 깔끔하게
     
-    # 채팅 메시지 표시 - 고정 높이 컨테이너
+    # 채팅 메시지 표시 - HTML 버전과 동일한 레이아웃
     chat_container = st.container()
     with chat_container:
-        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-        
-        for message in st.session_state.messages:
-            if message["role"] == "user":
-                display_chat_message(message["content"], is_user=True)
-            elif message["role"] == "typing":
-                display_chat_message(message["content"], is_typing=True)
-            else:
-                display_chat_message(message["content"], is_user=False)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        if not st.session_state.messages:
+            # 환영 메시지 - HTML 버전과 동일
+            st.markdown("""
+            <div style="text-align: center; padding: 40px; color: #6b7280;">
+                <p style="margin-bottom: 10px;">안녕하세요! 춘천시 AI 헬퍼 <strong>춘이</strong>입니다!</p>
+                <p style="margin-bottom: 10px;">춘천의 관광, 맛집, 행사, 정책 등 뭐든지 물어보세요!</p>
+                <p style="margin-bottom: 10px;">예를 들어 이런 걸 물어보실 수 있어요:</p>
+                <ul style="text-align: left; display: inline-block; margin-top: 10px; list-style: none; padding: 0;">
+                    <li style="margin: 5px 0;">• 이번주 춘천 행사 뭐 있어?</li>
+                    <li style="margin: 5px 0;">• 춘천 닭갈비 맛집 추천해줘</li>
+                    <li style="margin: 5px 0;">• 춘천 전기차 충전소 어디 있어?</li>
+                    <li style="margin: 5px 0;">• 춘천시 청년 정책 알려줘</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # 채팅 메시지들
+            for message in st.session_state.messages:
+                if message["role"] == "user":
+                    display_chat_message(message["content"], is_user=True)
+                elif message["role"] == "typing":
+                    display_chat_message(message["content"], is_typing=True)
+                else:
+                    display_chat_message(message["content"], is_user=False)
     
-    # 빠른 질문 섹션 - 입력창 바로 위에 고정
+    # 빠른 질문 섹션 - HTML 버전과 동일하게 항상 표시
     display_quick_questions()
     
     # 채팅 입력
