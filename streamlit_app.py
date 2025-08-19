@@ -6,13 +6,21 @@ import streamlit as st
 import os
 from datetime import datetime
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import pandas as pd
+import numpy as np
+import glob
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.schema import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain
+import requests
+import json
 
 # AI 라이브러리 import
 try:
-    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    from langchain_community.vectorstores import FAISS
-    from langchain_community.retrievers import TavilySearchAPIRetriever
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnablePassthrough, RunnableLambda
     from langchain.chains import LLMChain
@@ -181,6 +189,70 @@ class ChuncheonDataLoader:
         
         return documents
 
+class ChuncheonPublicAPI:
+    """춘천시 공공데이터 API 클래스"""
+    
+    def __init__(self, api_key: str = "4e51a9f2-b6b2-4b9c-9b2b-4b9c9b2b4b9c"):
+        self.api_key = api_key
+        self.base_urls = {
+            "events": "https://apis.data.go.kr/4180000/ccevent",
+            "culture": "https://apis.data.go.kr/4180000/ccculture", 
+            "tourism": "https://apis.data.go.kr/4180000/cctour"
+        }
+    
+    def get_events(self, event_name: str = None) -> List[Dict]:
+        """공연행사 정보 조회"""
+        try:
+            params = {
+                "serviceKey": self.api_key,
+                "pageNo": "1",
+                "numOfRows": "10",
+                "_type": "json"
+            }
+            
+            if event_name:
+                params["eventNm"] = event_name
+            
+            response = requests.get(
+                f"{self.base_urls['events']}/getEventList",
+                params=params,
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'response' in data and 'body' in data['response']:
+                    items = data['response']['body'].get('items', [])
+                    return items if isinstance(items, list) else [items] if items else []
+            return []
+        except Exception as e:
+            return []
+    
+    def get_tourism_info(self, keyword: str = None) -> List[Dict]:
+        """관광 정보 조회"""
+        try:
+            params = {
+                "serviceKey": self.api_key,
+                "pageNo": "1",
+                "numOfRows": "10",
+                "_type": "json"
+            }
+            
+            response = requests.get(
+                f"{self.base_urls['tourism']}/getTourList",
+                params=params,
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'response' in data and 'body' in data['response']:
+                    items = data['response']['body'].get('items', [])
+                    return items if isinstance(items, list) else [items] if items else []
+            return []
+        except Exception as e:
+            return []
+
 class EnhancedChuncheonChatbot:
     """RAG 기반 춘천시 챗봇"""
     
@@ -190,70 +262,65 @@ class EnhancedChuncheonChatbot:
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다.")
         
-        self.tavily_api_key = os.getenv("TAVILY_API_KEY")
+        # Perplexity API 키 설정
+        self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
+        if not self.perplexity_api_key:
+            st.warning("⚠️ Perplexity API 키가 설정되지 않았습니다. 웹 검색 기능이 제한됩니다.")
         
-        # 데이터 로더 초기화
-        self.data_loader = ChuncheonDataLoader()
+        # 춘천시 공공데이터 API 초기화
+        self.public_api = ChuncheonPublicAPI()
         
-        # 임베딩 및 벡터스토어 초기화
-        self.embeddings = OpenAIEmbeddings()
-        self.vector_store = None
-        self.retriever = None
+        # 임베딩 모델 초기화
+        self.embeddings = OpenAIEmbeddings(
+            openai_api_key=self.api_key,
+            model="text-embedding-3-small"
+        )
         
-        # Tavily 검색 초기화
-        self.tavily_retriever = None
-        if self.tavily_api_key:
-            try:
-                self.tavily_retriever = TavilySearchAPIRetriever(
-                    k=3,
-                    api_key=self.tavily_api_key
-                )
-            except Exception as e:
-                st.warning(f"Tavily 초기화 실패: {e}")
+        # 벡터 스토어 생성
+        self.vector_store = self._create_vector_store()
         
         # LLM 초기화
         self.llm = ChatOpenAI(
             model="gpt-4o-mini",
-            temperature=0.7
+            temperature=0.7,
+            openai_api_key=self.api_key
         )
         
-        # 벡터스토어 생성
-        self._create_vector_store()
-        
-        # 프롬프트 템플릿
-        self.prompt_template = """당신은 '춘이'라는 이름의 강원특별자치도 춘천시 AI 도우미입니다.
+        # 프롬프트 템플릿 설정
+        self.prompt_template = ChatPromptTemplate.from_messages([
+            ("system", """
+당신은 춘천시 전문 AI 도우미 '춘이'입니다.
 
-# 필수 지침:
-1. 항상 친근하고 도움이 되는 태도로 한국어로 응답하세요
-2. **절대 추측하거나 가짜 정보를 만들지 마세요**
-3. **주소, 전화번호, 영업시간 등 구체적 정보는 반드시 제공된 데이터에서만 사용하세요**
-4. 정보가 없으면 "정확한 정보를 찾을 수 없습니다"라고 답하세요
-5. 존댓말을 사용하세요
-6. 춘천시와 관련된 정보를 우선적으로 제공하세요
+**중요 지침:**
+1. 반드시 제공된 춘천시 데이터와 Perplexity 검색 결과만을 사용하여 답변하세요.
+2. 확실하지 않은 정보는 추측하지 말고 "정확한 정보를 찾지 못했습니다"라고 말하세요.
+3. 답변은 친근하고 도움이 되도록 작성하세요.
+4. 춘천시와 관련 없는 질문에는 "춘천시 관련 질문만 답변드릴 수 있습니다"라고 응답하세요.
+5. 지도나 거리 관련 질문에는 "정확한 위치나 거리는 네이버 지도나 카카오맵을 이용해주세요"라고 안내하세요.
 
-# 특별 안내사항:
-- **거리/경로 질문**: "정확한 거리 측정을 위해서는 네이버 지도나 카카오맵을 이용해주세요. 대략적인 위치 정보만 안내드릴 수 있습니다."
-- **실시간 교통정보**: "실시간 교통상황은 네이버 지도, 카카오맵 등에서 확인하시기 바랍니다."
+**춘천시 기본 정보:**
+- 대표 음식: 닭갈비, 막국수
+- 주요 관광지: 남이섬, 소양강댐, 춘천호
+- 시청 전화: 033-250-3000
+- 춘천역: 1544-7788
+- 강원대학교 춘천캠퍼스 총장: 김헌영 (2023년 기준)
+- 한림대학교: 춘천시 한림대학길 1
 
-# 현재 시각: {current_time}
-
-# 관련 데이터:
+**제공된 데이터:**
 {context}
 
-# 웹 검색 결과:
-{web_results}
-
-# 사용자 질문: {question}
-
-답변:"""
-        
+**Perplexity 검색 결과:**
+{web_search}
+            """),
+            ("human", "{question}")
+        ])
         self.prompt = ChatPromptTemplate.from_template(self.prompt_template)
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
     
     def _create_vector_store(self):
         """벡터스토어 생성"""
         try:
-            documents = self.data_loader.load_csv_data()
+            documents = ChuncheonDataLoader().load_csv_data()
             
             if documents:
                 text_splitter = RecursiveCharacterTextSplitter(
@@ -267,54 +334,119 @@ class EnhancedChuncheonChatbot:
                 if len(splits) > batch_size:
                     splits = splits[:batch_size]
                 
-                self.vector_store = FAISS.from_documents(
+                vector_store = FAISS.from_documents(
                     documents=splits,
                     embedding=self.embeddings
                 )
-                self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
+                return vector_store.as_retriever(search_kwargs={"k": 5})
                 
         except Exception as e:
             st.warning(f"벡터스토어 생성 실패: {e}")
+            return None
     
-    def generate_response(self, message: str) -> str:
-        """사용자 메시지에 대한 응답 생성"""
+    def _get_perplexity_search_results(self, query: str) -> str:
+        """Perplexity API를 사용한 웹 검색"""
+        # Perplexity API 키가 없으면 로컬 데이터만 사용
+        if not self.perplexity_api_key:
+            return "로컬 데이터만 사용합니다."
+            
         try:
-            current_time = datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
+            # 춘천 관련 검색어로 보강
+            enhanced_query = f"춘천시 {query} 2024 2025 최신 정보"
             
-            # RAG 검색
-            context = ""
-            if self.retriever:
-                try:
-                    docs = self.retriever.get_relevant_documents(message)
-                    context = "\n\n".join([doc.page_content for doc in docs[:3]])
-                except:
-                    context = "관련 데이터를 찾을 수 없습니다."
+            url = "https://api.perplexity.ai/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.perplexity_api_key}",
+                "Content-Type": "application/json"
+            }
             
-            # 웹 검색
-            web_results = ""
-            if self.tavily_retriever:
-                try:
-                    web_docs = self.tavily_retriever.get_relevant_documents(f"춘천시 {message}")
-                    web_results = "\n\n".join([doc.page_content for doc in web_docs[:2]])
-                except:
-                    web_results = "웹 검색 결과가 없습니다."
+            payload = {
+                "model": "llama-3.1-sonar-small-128k-online",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "당신은 춘천시 정보 전문가입니다. 최신 정보를 정확하고 간결하게 제공해주세요."
+                    },
+                    {
+                        "role": "user", 
+                        "content": enhanced_query
+                    }
+                ],
+                "max_tokens": 500,
+                "temperature": 0.2
+            }
             
-            response = self.chain.invoke({
-                "question": message,
-                "current_time": current_time,
-                "context": context,
-                "web_results": web_results
-            })
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
             
-            if isinstance(response, dict):
-                return response.get('text', str(response))
-            elif hasattr(response, 'content'):
-                return response.content
+            if response.status_code == 200:
+                result = response.json()
+                return result['choices'][0]['message']['content']
             else:
-                return str(response)
+                return "웹 검색을 사용할 수 없습니다. 로컬 데이터만 사용합니다."
                 
         except Exception as e:
-            return f"죄송합니다. 답변 생성 중 문제가 발생했습니다: {str(e)}"
+            return "웹 검색을 사용할 수 없습니다. 로컬 데이터만 사용합니다."
+    
+    def _get_public_api_results(self, query: str) -> str:
+        """춘천시 공공데이터 API 결과 가져오기"""
+        try:
+            results = []
+            
+            # 행사 관련 키워드 검색
+            if any(keyword in query for keyword in ["행사", "공연", "축제", "이벤트"]):
+                events = self.public_api.get_events()
+                if events:
+                    results.append("최신 행사 정보:")
+                    for event in events[:3]:
+                        if isinstance(event, dict):
+                            name = event.get('eventNm', '비어있음')
+                            date = event.get('eventDate', '비어있음')
+                            place = event.get('eventPlace', '비어있음')
+                            results.append(f"- {name} ({date}, {place})")
+            
+            # 관광 관련 키워드 검색
+            if any(keyword in query for keyword in ["관광", "여행", "명소", "추천"]):
+                tourism = self.public_api.get_tourism_info()
+                if tourism:
+                    results.append("관광지 정보:")
+                    for place in tourism[:3]:
+                        if isinstance(place, dict):
+                            name = place.get('tourNm', '비어있음')
+                            addr = place.get('tourAddr', '비어있음')
+                            results.append(f"- {name} ({addr})")
+            
+            return "\n".join(results) if results else "공공데이터에서 관련 정보를 찾을 수 없습니다."
+            
+        except Exception as e:
+            return "공공데이터 조회 중 오류가 발생했습니다."
+
+    def generate_response(self, question: str) -> str:
+        """질문에 대한 응답 생성"""
+        try:
+            # 벡터 스토어에서 관련 문서 검색
+            relevant_docs = self.vector_store.similarity_search(question, k=5)
+            context = "\n".join([doc.page_content for doc in relevant_docs])
+            
+            # Perplexity 웹 검색 결과 가져오기
+            web_search_results = self._get_perplexity_search_results(question)
+            
+            # 공공데이터 API 결과 가져오기
+            public_data_results = self._get_public_api_results(question)
+            
+            # 모든 정보 결합
+            combined_info = f"{web_search_results}\n\n공공데이터: {public_data_results}"
+            
+            # LLM 체인 실행
+            response = self.chain.run(
+                context=context,
+                web_search=combined_info,
+                question=question
+            )
+            
+            return response
+            
+        except Exception as e:
+            return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
 
 def initialize_chatbot():
     """RAG 챗봇 초기화 - 캐시 제거로 문제 해결"""
