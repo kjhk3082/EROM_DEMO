@@ -18,6 +18,10 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
 import requests
 import json
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
 
 # AI 라이브러리 import
 try:
@@ -258,33 +262,43 @@ class EnhancedChuncheonChatbot:
     
     def __init__(self):
         # API 키 설정
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = None
+        self.perplexity_api_key = None
+        
+        # OpenAI API 키 로드 (우선순위: Streamlit secrets > 환경변수)
+        try:
+            self.api_key = st.secrets["OPENAI_API_KEY"]
+        except:
+            self.api_key = os.getenv("OPENAI_API_KEY")
+        
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다.")
+            st.error("Streamlit Cloud Secrets에 OPENAI_API_KEY를 설정해주세요.")
+            return
         
-        # Perplexity API 키 설정
-        self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
+        # Perplexity API 키 로드
+        try:
+            self.perplexity_api_key = st.secrets["PERPLEXITY_API_KEY"]
+        except:
+            self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
+        
         if not self.perplexity_api_key:
-            st.warning("⚠️ Perplexity API 키가 설정되지 않았습니다. 웹 검색 기능이 제한됩니다.")
+            st.warning("Perplexity API 키가 설정되지 않았습니다. 웹 검색 기능이 제한됩니다.")
         
-        # 춘천시 공공데이터 API 초기화
-        self.public_api = ChuncheonPublicAPI()
-        
-        # 임베딩 모델 초기화
-        self.embeddings = OpenAIEmbeddings(
-            openai_api_key=self.api_key,
-            model="text-embedding-3-small"
-        )
-        
-        # 벡터 스토어 생성
-        self.vector_store = self._create_vector_store()
-        
-        # LLM 초기화
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.7,
-            openai_api_key=self.api_key
-        )
+        # 임베딩 및 LLM 초기화
+        try:
+            self.embeddings = OpenAIEmbeddings(
+                openai_api_key=self.api_key,
+                model="text-embedding-3-small"
+            )
+            self.vector_store = self._create_vector_store()
+            self.llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.7,
+                openai_api_key=self.api_key
+            )
+        except Exception as e:
+            st.error(f"챗봇 초기화 실패: {str(e)}")
+            return
         
         # 프롬프트 템플릿 설정
         self.prompt_template = ChatPromptTemplate.from_messages([
@@ -314,8 +328,9 @@ class EnhancedChuncheonChatbot:
             """),
             ("human", "{question}")
         ])
-        self.prompt = ChatPromptTemplate.from_template(self.prompt_template)
-        self.chain = LLMChain(llm=self.llm, prompt=self.prompt)
+        
+        # LLM 체인 생성
+        self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
     
     def _create_vector_store(self):
         """벡터스토어 생성"""

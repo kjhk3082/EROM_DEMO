@@ -5,9 +5,15 @@ python-dotenv>=1.0.0
 # AI/ML 라이브러리 (Python 3.13 호환)
 openai>=1.40.0
 langchain>=0.2.14
-langchain-openai>=0.1.20
-langchain-community>=0.2.12
-langchain-core>=0.2.32
+langchain
+langchain-openai
+langchain-community
+openai
+faiss-cpu
+pandas
+numpy
+requests
+python-dotenv>=0.2.32
 langchain-text-splitters>=0.2.0
 
 # 데이터 처리 (Python 3.13 빌드 오류 해결)
