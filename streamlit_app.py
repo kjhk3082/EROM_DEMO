@@ -621,6 +621,13 @@ class EnhancedChuncheonChatbot:
                 question=question
             )
             
+            step4.markdown("""
+            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                ✓ 답변 완료!
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.2)
+            
             return response
             
         except Exception as e:
@@ -740,12 +747,11 @@ def main():
     # 메인 컨테이너
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
     
-    # 간단한 헤더
+    # 헤더
     st.markdown("""
-    <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
-        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 600; color: #333;">
-            🌸 춘천시 AI 도우미 춘이
-        </h1>
+    <div class="main-header">
+        <h1>🌸 춘천시 AI 도우미 춘이 🌸</h1>
+        <p>춘천시 관광, 행사, 맛집 정보를 실시간으로 알려드려요!</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -883,7 +889,7 @@ def main():
     <div class="footer-info">
         <div>🌸 <strong>춘천시 주요 정보</strong> 🌸</div>
         <div>닭갈비 · 막국수 · 남이섬 · 소양강댐</div>
-        <div>📞 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788</div>
+        <div>📞 춘천시청: 033-250-3114</div>
         <div style="margin-top: 8px; font-size: 0.8rem; opacity: 0.8;">2025 강원 프롬프톤 | 한림대 김재형, 김성호, 김강민</div>
         <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 5px;">API: apis.data.go.kr/4180000/ccevent, cctour</div>
     </div>
