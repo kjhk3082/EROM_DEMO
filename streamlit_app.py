@@ -12,6 +12,7 @@ import glob
 import uuid
 import requests
 import json
+import time
 from typing import List, Dict, Any
 
 # AI 라이브러리 import
@@ -446,52 +447,52 @@ st.markdown("""
     /* 전체 페이지 스타일 */
     .main > div {
         padding-top: 1rem;
-        padding-bottom: 2rem;
+        padding-bottom: 0rem;
     }
     
     /* 헤더 스타일 - Flask 버전과 동일 */
     .chuni-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 30px 25px;
-        border-radius: 20px;
+        padding: 25px 20px;
+        border-radius: 15px;
         text-align: center;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        margin-bottom: 20px;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
     
     .chuni-logo {
-        width: 70px;
-        height: 70px;
-        margin: 0 auto 15px;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 10px;
         animation: float 3s ease-in-out infinite;
     }
     
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-8px); }
+        50% { transform: translateY(-6px); }
     }
     
     .chuni-title {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-weight: 700;
-        margin: 15px 0 8px 0;
+        margin: 10px 0 5px 0;
         text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .chuni-subtitle {
-        font-size: 1rem;
+        font-size: 0.9rem;
         opacity: 0.9;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     
     .status-indicator {
         display: inline-flex;
         align-items: center;
         background: rgba(255,255,255,0.2);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
     }
     
     .status-dot {
@@ -499,7 +500,7 @@ st.markdown("""
         height: 6px;
         background: #4ade80;
         border-radius: 50%;
-        margin-right: 6px;
+        margin-right: 5px;
         animation: pulse 2s infinite;
     }
     
@@ -508,15 +509,27 @@ st.markdown("""
         50% { opacity: 0.5; }
     }
     
+    /* 채팅 컨테이너 - 고정 높이 및 스크롤 */
+    .chat-container {
+        height: 400px;
+        overflow-y: auto;
+        padding: 15px;
+        background: #fafafa;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #e0e0e0;
+    }
+    
     /* 채팅 메시지 스타일 */
     .chat-message {
-        margin: 12px 0;
-        padding: 12px 16px;
+        margin: 10px 0;
+        padding: 12px 15px;
         border-radius: 15px;
-        max-width: 80%;
+        max-width: 75%;
         word-wrap: break-word;
         line-height: 1.5;
         animation: fadeIn 0.3s ease-in;
+        font-size: 0.9rem;
     }
     
     @keyframes fadeIn {
@@ -532,10 +545,11 @@ st.markdown("""
     }
     
     .bot-message {
-        background: #f8f9fa;
+        background: #ffffff;
         color: #333;
         border: 1px solid #e9ecef;
         margin-right: auto;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
     .bot-info {
@@ -546,8 +560,8 @@ st.markdown("""
     }
     
     .bot-avatar {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         background: linear-gradient(135deg, #667eea, #764ba2);
         display: flex;
@@ -561,7 +575,71 @@ st.markdown("""
     .bot-name {
         font-weight: 600;
         color: #667eea;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+    }
+    
+    /* 타이핑 인디케이터 */
+    .typing-indicator {
+        margin: 10px 0;
+        padding: 12px 15px;
+        border-radius: 15px;
+        max-width: 75%;
+        background: #ffffff;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-right: auto;
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    .typing-dots {
+        display: inline-block;
+    }
+    
+    .typing-dots span {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #667eea;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% {
+            opacity: 0.3;
+            transform: translateY(0);
+        }
+        30% {
+            opacity: 1;
+            transform: translateY(-8px);
+        }
+    }
+    
+    /* 빠른 질문 섹션 - 입력창 위에 고정 */
+    .quick-questions-container {
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .quick-questions-header {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 10px;
+        text-align: center;
     }
     
     /* Streamlit 기본 요소 숨기기 */
@@ -582,22 +660,23 @@ st.markdown("""
     
     /* 메인 컨테이너 스타일 */
     .block-container {
-        max-width: 800px;
+        max-width: 750px;
         padding: 15px;
     }
     
-    /* 빠른 질문 버튼 스타일 - 작게 만들기 */
+    /* 빠른 질문 버튼 스타일 - 작게 하되 텍스트 유지 */
     .stButton > button {
         background: linear-gradient(135deg, #f8f9fa, #e9ecef);
         color: #667eea;
         border: 1px solid #667eea;
         border-radius: 20px;
-        padding: 6px 12px;
+        padding: 5px 10px;
         font-weight: 500;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         transition: all 0.3s ease;
         height: auto;
-        min-height: 35px;
+        min-height: 30px;
+        width: 100%;
     }
     
     .stButton > button:hover {
@@ -607,37 +686,16 @@ st.markdown("""
         box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
     }
     
-    /* 빠른 질문 섹션 스타일 */
-    .quick-questions-header {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #495057;
-        margin: 20px 0 10px 0;
+    /* 하단 정보 스타일 */
+    .footer-info {
         text-align: center;
-    }
-    
-    /* 채팅 컨테이너 최대 높이 설정 */
-    .chat-container {
-        max-height: 400px;
-        overflow-y: auto;
-        padding: 10px 0;
+        padding: 10px;
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin-top: 15px;
+        border-top: 1px solid #e0e0e0;
     }
 </style>
-
-<script>
-// 채팅 후 입력창에 포커스
-function focusChatInput() {
-    setTimeout(function() {
-        const chatInput = document.querySelector('[data-testid="stChatInput"] input');
-        if (chatInput) {
-            chatInput.focus();
-        }
-    }, 100);
-}
-
-// 페이지 로드 시 포커스
-window.addEventListener('load', focusChatInput);
-</script>
 """, unsafe_allow_html=True)
 
 def display_chuni_header():
@@ -645,7 +703,7 @@ def display_chuni_header():
     st.markdown("""
     <div class="chuni-header">
         <div class="chuni-logo">
-            <svg width="70" height="70" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                 <!-- Background circle -->
                 <circle cx="100" cy="100" r="95" fill="#f5e6d3" stroke="#2c5282" stroke-width="4"/>
                 <!-- Robot body -->
@@ -680,8 +738,12 @@ def display_chuni_header():
     """, unsafe_allow_html=True)
 
 def display_quick_questions():
-    """빠른 질문 버튼들 표시 - Enhanced 버전과 동일"""
-    st.markdown('<p class="quick-questions-header">🚀 빠른 질문</p>', unsafe_allow_html=True)
+    """빠른 질문 버튼들 표시 - 입력창 위에 고정"""
+    st.markdown("""
+    <div class="quick-questions-container">
+        <p class="quick-questions-header">🚀 빠른 질문</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Enhanced 버전과 동일한 질문들
     quick_questions = [
@@ -695,33 +757,38 @@ def display_quick_questions():
         {"icon": "📞", "text": "시청 민원실 전화번호 알려줘"}
     ]
     
-    # 4열로 배치 (작은 버튼)
+    # 4열로 배치 (텍스트 포함, 작은 크기)
     cols = st.columns(4)
     for i, q in enumerate(quick_questions):
         col = cols[i % 4]
         with col:
-            if st.button(f"{q['icon']}", key=f"quick_{i}", help=q['text'], use_container_width=True):
-                if st.session_state.chatbot_ready:
-                    # 질문을 채팅에 추가
-                    st.session_state.messages.append({"role": "user", "content": q['text']})
-                    # 실제 AI 응답 생성
-                    with st.spinner("춘이가 답변을 준비하고 있습니다..."):
-                        try:
-                            bot_response = st.session_state.chatbot.generate_response(
-                                q['text'], 
-                                st.session_state.session_id
-                            )
-                            st.session_state.messages.append({"role": "assistant", "content": bot_response})
-                        except Exception as e:
-                            error_msg = f"죄송합니다. 오류가 발생했습니다: {str(e)}"
-                            st.session_state.messages.append({"role": "assistant", "content": error_msg})
-                else:
-                    st.error("❌ 춘이 AI가 아직 준비되지 않았습니다.")
+            # 텍스트를 줄여서 표시
+            short_text = q['text'][:12] + "..." if len(q['text']) > 12 else q['text']
+            if st.button(f"{q['icon']} {short_text}", key=f"quick_{i}", use_container_width=True, help=q['text']):
+                # 즉시 사용자 메시지 추가
+                st.session_state.messages.append({"role": "user", "content": q['text']})
+                # 타이핑 인디케이터 추가
+                st.session_state.messages.append({"role": "typing", "content": "춘이가 생각중입니다..."})
                 st.rerun()
 
-def display_chat_message(message, is_user=False):
+def display_chat_message(message, is_user=False, is_typing=False):
     """채팅 메시지 표시"""
-    if is_user:
+    if is_typing:
+        st.markdown(f"""
+        <div class="typing-indicator">
+            <div class="bot-info">
+                <div class="bot-avatar">🤖</div>
+                <div class="bot-name">춘이</div>
+            </div>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            {message}
+        </div>
+        """, unsafe_allow_html=True)
+    elif is_user:
         st.markdown(f"""
         <div class="chat-message user-message">
             <strong>👤 사용자:</strong><br>
@@ -766,6 +833,28 @@ def initialize_session_state():
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
 
+def process_ai_response(user_message):
+    """AI 응답 비동기 처리"""
+    try:
+        # 타이핑 인디케이터 제거
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "typing":
+            st.session_state.messages.pop()
+        
+        # 실제 AI 응답 생성
+        response = st.session_state.chatbot.generate_response(
+            user_message, 
+            st.session_state.session_id
+        )
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
+    except Exception as e:
+        # 타이핑 인디케이터 제거
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "typing":
+            st.session_state.messages.pop()
+        
+        error_msg = f"죄송합니다. 오류가 발생했습니다: {str(e)}"
+        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
 def main():
     # 세션 상태 초기화
     initialize_session_state()
@@ -785,98 +874,62 @@ def main():
     # 환영 메시지 (메시지가 없을 때만)
     if not st.session_state.messages:
         st.markdown("""
-        <div style="text-align: center; padding: 30px; background: #f8f9fa; border-radius: 15px; margin: 20px 0;">
-            <h3 style="color: #667eea; margin-bottom: 15px;">안녕하세요! 춘천시 AI 헬퍼 <strong>춘이</strong>입니다! 🌸</h3>
-            <p style="color: #6b7280; margin-bottom: 10px;">춘천의 관광, 맛집, 행사, 정책 등 뭐든지 물어보세요!</p>
-            <p style="color: #6b7280;">예를 들어 이런 걸 물어보실 수 있어요:</p>
-            <div style="text-align: left; display: inline-block; margin-top: 15px; color: #495057; font-size: 0.9rem;">
-                • 이번주 춘천 행사 뭐 있어?<br>
-                • 춘천 닭갈비 맛집 추천해줘<br>
-                • 춘천 전기차 충전소 어디 있어?<br>
-                • 우리 할머니 일자리 프로그램 있을까?
-            </div>
+        <div style="text-align: center; padding: 25px; background: #f8f9fa; border-radius: 10px; margin-bottom: 15px;">
+            <h4 style="color: #667eea; margin-bottom: 10px;">안녕하세요! 춘천시 AI 헬퍼 <strong>춘이</strong>입니다! 🌸</h4>
+            <p style="color: #6b7280; margin-bottom: 8px; font-size: 0.9rem;">춘천의 관광, 맛집, 행사, 정책 등 뭐든지 물어보세요!</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # 채팅 메시지 표시
-    with st.container():
+    # 채팅 메시지 표시 - 고정 높이 컨테이너
+    chat_container = st.container()
+    with chat_container:
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        
         for message in st.session_state.messages:
             if message["role"] == "user":
                 display_chat_message(message["content"], is_user=True)
+            elif message["role"] == "typing":
+                display_chat_message(message["content"], is_typing=True)
             else:
                 display_chat_message(message["content"], is_user=False)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # 빠른 질문 섹션
+    # 빠른 질문 섹션 - 입력창 바로 위에 고정
     display_quick_questions()
     
     # 채팅 입력
-    st.markdown("---")
     user_input = st.chat_input("춘천에 대해 뭐든지 물어보세요...", key="chat_input")
+    
+    # 타이핑 상태가 있으면 AI 응답 처리
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "typing":
+        # 마지막 사용자 메시지 찾기
+        user_message = None
+        for msg in reversed(st.session_state.messages[:-1]):
+            if msg["role"] == "user":
+                user_message = msg["content"]
+                break
+        
+        if user_message:
+            process_ai_response(user_message)
+            st.rerun()
     
     if user_input:
         if st.session_state.chatbot_ready:
-            # 사용자 메시지 추가
+            # 즉시 사용자 메시지 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
-            
-            # 실제 AI 응답 생성
-            with st.spinner("춘이가 생각중입니다..."):
-                try:
-                    response = st.session_state.chatbot.generate_response(
-                        user_input, 
-                        st.session_state.session_id
-                    )
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                except Exception as e:
-                    error_msg = f"죄송합니다. 오류가 발생했습니다: {str(e)}"
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            # 타이핑 인디케이터 추가
+            st.session_state.messages.append({"role": "typing", "content": "춘이가 생각중입니다..."})
+            st.rerun()
         else:
             st.error("❌ 춘이 AI가 아직 준비되지 않았습니다. 페이지를 새로고침해주세요.")
-        
-        # 채팅 후 입력창 포커스를 위한 JavaScript 실행
-        st.markdown("""
-        <script>
-        setTimeout(function() {
-            const chatInput = document.querySelector('[data-testid="stChatInput"] input');
-            if (chatInput) {
-                chatInput.focus();
-                chatInput.scrollIntoView({behavior: 'smooth', block: 'center'});
-            }
-        }, 200);
-        </script>
-        """, unsafe_allow_html=True)
-        
-        st.rerun()
     
     # 하단 정보
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        **🏛️ 춘천시청**  
-        📞 033-250-3000  
-        📍 중앙로 1
-        """)
-    
-    with col2:
-        st.markdown("""
-        **🚂 춘천역**  
-        📞 1544-7788  
-        📍 근화동 472-1
-        """)
-    
-    with col3:
-        st.markdown("""
-        **🍽️ 특산품**  
-        🍗 춘천닭갈비  
-        🍜 막국수
-        """)
-    
-    # 하단 푸터
     st.markdown("""
-    <div style="text-align: center; padding: 15px; color: #6b7280; font-size: 0.8rem; margin-top: 20px;">
+    <div class="footer-info">
         <p>🌸 <strong>춘천시 AI 도우미 춘이</strong> - 2025년 프롬프톤 출품작 🌸</p>
         <p>개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</p>
+        <p>🏛️ 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788 | 🍗 특산품: 닭갈비, 막국수</p>
     </div>
     """, unsafe_allow_html=True)
 
