@@ -393,12 +393,15 @@ def main():
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
                         
-                        # 로딩 메시지 추가
-                        with st.spinner("🌸 춘이가 생각중..."):
-                            # AI 응답 생성
-                            response = chatbot.generate_response(question)
-                            st.session_state.messages.append({"role": "assistant", "content": response})
+                        # 로딩 메시지 추가 (채팅에 표시)
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        st.rerun()
                         
+                        # AI 응답 생성
+                        response = chatbot.generate_response(question)
+                        
+                        # 로딩 메시지를 실제 응답으로 교체
+                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
                         st.rerun()
             
             # 두 번째 행
@@ -408,12 +411,15 @@ def main():
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
                         
-                        # 로딩 메시지 추가
-                        with st.spinner("🌸 춘이가 생각중..."):
-                            # AI 응답 생성
-                            response = chatbot.generate_response(question)
-                            st.session_state.messages.append({"role": "assistant", "content": response})
+                        # 로딩 메시지 추가 (채팅에 표시)
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        st.rerun()
                         
+                        # AI 응답 생성
+                        response = chatbot.generate_response(question)
+                        
+                        # 로딩 메시지를 실제 응답으로 교체
+                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
                         st.rerun()
         
         # 채팅 입력
@@ -424,12 +430,15 @@ def main():
             # 사용자 질문 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
             
-            # 로딩 메시지 추가
-            with st.spinner("🌸 춘이가 답변을 생성하고 있습니다..."):
-                # AI 응답 생성
-                response = chatbot.generate_response(user_input)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+            # 로딩 메시지 추가 (채팅에 표시)
+            st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
+            st.rerun()
             
+            # AI 응답 생성
+            response = chatbot.generate_response(user_input)
+            
+            # 로딩 메시지를 실제 응답으로 교체
+            st.session_state.messages[-1] = {"role": "assistant", "content": response}
             st.rerun()
     
     # 하단 정보 (항상 표시)
@@ -438,7 +447,7 @@ def main():
         <div>🌸 <strong>춘천시 주요 정보</strong> 🌸</div>
         <div>닭갈비 · 막국수 · 남이섬 · 소양강댐</div>
         <div>📞 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788</div>
-        <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</div>
+        <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">2025 강원 프롬프톤 | 한림대 김재형, 김성호, 김강민</div>
     </div>
     """, unsafe_allow_html=True)
 
