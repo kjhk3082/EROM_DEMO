@@ -9,6 +9,12 @@ from chatbot import ChuncheonAIChatbot
 from data_collector import ChuncheonDataCollector
 import json
 
+# API 키 설정 (Streamlit Secrets 우선, 없으면 환경변수)
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+if "TAVILY_API_KEY" in st.secrets:
+    os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
+
 # 페이지 설정
 st.set_page_config(
     page_title="춘천시 AI 가이드",

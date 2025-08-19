@@ -674,4 +674,9 @@ if __name__ == '__main__':
     csv_folder = "./민원 관련"
     chatbot = EnhancedChuncheonChatbot()
     chatbot.initialize(csv_folder)
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    
+    # 환경변수에서 포트 가져오기 (기본값: 8080)
+    port = int(os.environ.get('PORT', 8080))
+    debug_mode = os.environ.get('FLASK_ENV', 'production') == 'development'
+    
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

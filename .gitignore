@@ -1,32 +1,8 @@
-# Environment variables
-.env
-.env.*
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -44,42 +20,47 @@ wheels/
 .installed.cfg
 *.egg
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-chroma_db/
+# Virtual Environment
+venv/
+env/
+.venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
 
 # Logs
 *.log
-logs/
 
-# Flask
-instance/
-.webassets-cache
-flask_session/
+# Database
+*.db
+*.sqlite
+chroma_db/
+.chroma/
 
-# Archives
-*.zip
-*.tar.gz
-*.rar
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# OS files
-Thumbs.db
-.DS_Store
+# PM2
+.pm2/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Streamlit
+.streamlit/secrets.toml
 
 # Temporary files
 *.tmp
-*.temp
-*.bak
-*.swp
-*.swo
-*~
-
-# API keys and secrets
-*.key
-secrets.json
-config.json
-
-# Large CSV files (over 100MB)
-**/강원특별자치도 춘천시_관광지 및 상권 정밀 위치기반 이용자 실태 현황_*.csv
+temp/
+tmp/
