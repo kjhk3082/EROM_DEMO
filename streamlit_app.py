@@ -385,11 +385,14 @@ def main():
                 if st.button(question, key=f"quick_{i}"):
                     st.session_state.messages.append({"role": "user", "content": question})
                     
-                    # AI 응답 생성
-                    with st.spinner("🌸 춘이가 생각중..."):
-                        response = chatbot.generate_response(question)
-                        st.session_state.messages.append({"role": "assistant", "content": response})
+                    # 임시 로딩 메시지 추가
+                    st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                    st.rerun()
                     
+                    # AI 응답 생성
+                    response = chatbot.generate_response(question)
+                    # 로딩 메시지 제거하고 실제 응답으로 교체
+                    st.session_state.messages[-1] = {"role": "assistant", "content": response}
                     st.rerun()
         
         # 두 번째 행
@@ -398,11 +401,14 @@ def main():
                 if st.button(question, key=f"quick_{i+4}"):
                     st.session_state.messages.append({"role": "user", "content": question})
                     
-                    # AI 응답 생성
-                    with st.spinner("🌸 춘이가 생각중..."):
-                        response = chatbot.generate_response(question)
-                        st.session_state.messages.append({"role": "assistant", "content": response})
+                    # 임시 로딩 메시지 추가
+                    st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                    st.rerun()
                     
+                    # AI 응답 생성
+                    response = chatbot.generate_response(question)
+                    # 로딩 메시지 제거하고 실제 응답으로 교체
+                    st.session_state.messages[-1] = {"role": "assistant", "content": response}
                     st.rerun()
         
         # 채팅 입력
@@ -413,11 +419,14 @@ def main():
             # 사용자 메시지 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
             
-            # AI 응답 생성 및 세션에 저장
-            with st.spinner("🌸 춘이가 답변을 생성하고 있습니다..."):
-                response = chatbot.generate_response(user_input)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+            # 임시 로딩 메시지 추가
+            st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
+            st.rerun()
             
+            # AI 응답 생성
+            response = chatbot.generate_response(user_input)
+            # 로딩 메시지를 실제 응답으로 교체
+            st.session_state.messages[-1] = {"role": "assistant", "content": response}
             st.rerun()
     
     # 하단 정보
