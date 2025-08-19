@@ -370,12 +370,33 @@ def main():
         chat_container = st.container()
         with chat_container:
             for message in st.session_state.messages:
-                if message["role"] == "assistant":
-                    with st.chat_message("assistant", avatar="🌸"):
-                        st.markdown(f"**춘이:** {message['content']}")
-                else:
+                if message["role"] == "user":
                     with st.chat_message("user"):
                         st.write(message["content"])
+                else:
+                    with st.chat_message("assistant", avatar="🌸"):
+                        st.write(f"**춘이:** {message['content']}")
+    
+            # 로딩 중인 메시지가 있으면 응답 생성
+            if (st.session_state.messages and 
+                st.session_state.messages[-1]["role"] == "assistant" and 
+                "생각중" in st.session_state.messages[-1]["content"]):
+                
+                # 마지막 사용자 메시지 찾기
+                user_message = None
+                for msg in reversed(st.session_state.messages):
+                    if msg["role"] == "user":
+                        user_message = msg["content"]
+                        break
+        
+                if user_message:
+                    try:
+                        response = chatbot.generate_response(user_message)
+                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
+                        st.rerun()
+                    except Exception as e:
+                        st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
+                        st.rerun()
         
         # 빠른 질문 버튼들 (접을 수 있음)
         with st.expander("🚀 빠른 질문", expanded=True):
@@ -400,19 +421,11 @@ def main():
                     if st.button(question, key=f"quick_{i}"):
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
-                        st.rerun()
                         
-                        # 로딩 메시지 추가 (채팅에 표시)
+                        # 로딩 메시지 추가
                         st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
-                        st.rerun()
                         
-                        # AI 응답 생성
-                        try:
-                            response = chatbot.generate_response(question)
-                            # 로딩 메시지를 실제 응답으로 교체
-                            st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                        except Exception as e:
-                            st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
+                        # 화면 업데이트하여 로딩 메시지 표시
                         st.rerun()
             
             # 두 번째 행
@@ -421,19 +434,11 @@ def main():
                     if st.button(question, key=f"quick_{i+4}"):
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
-                        st.rerun()
                         
-                        # 로딩 메시지 추가 (채팅에 표시)
+                        # 로딩 메시지 추가
                         st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
-                        st.rerun()
                         
-                        # AI 응답 생성
-                        try:
-                            response = chatbot.generate_response(question)
-                            # 로딩 메시지를 실제 응답으로 교체
-                            st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                        except Exception as e:
-                            st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
+                        # 화면 업데이트하여 로딩 메시지 표시
                         st.rerun()
         
         # 채팅 입력
@@ -443,16 +448,11 @@ def main():
         if user_input:
             # 사용자 질문 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
+            
             # 로딩 메시지 추가
             st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
-            st.rerun()
             
-            # AI 응답 생성 (백그라운드에서)
-            try:
-                response = chatbot.generate_response(user_input)
-                st.session_state.messages[-1] = {"role": "assistant", "content": response}
-            except Exception as e:
-                st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
+            # 화면 업데이트하여 로딩 메시지 표시
             st.rerun()
     
     # 메인 컨테이너 닫기
