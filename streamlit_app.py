@@ -124,8 +124,9 @@ class ChuncheonDataLoader:
         self.all_data = []
     
     def load_csv_data(self) -> List[Document]:
-        """모든 CSV 파일에서 데이터 로드"""
+        """모든 CSV 파일에서 데이터 로드 - 토큰 제한 고려"""
         documents = []
+        max_documents = 100  # 문서 수 제한
         
         for folder in self.data_folders:
             folder_path = os.path.join(os.getcwd(), folder)
@@ -134,7 +135,7 @@ class ChuncheonDataLoader:
                 
             csv_files = glob.glob(os.path.join(folder_path, "*.csv")) + glob.glob(os.path.join(folder_path, "*.CSV"))
             
-            for file_path in csv_files:
+            for file_path in csv_files[:2]:  # 파일 수 제한
                 try:
                     df = pd.read_csv(file_path, encoding='utf-8')
                 except UnicodeDecodeError:
@@ -145,16 +146,25 @@ class ChuncheonDataLoader:
                 
                 filename = os.path.basename(file_path)
                 
-                for idx, row in df.iterrows():
+                # 행 수 제한
+                for idx, row in df.head(50).iterrows():
+                    if len(documents) >= max_documents:
+                        break
+                        
                     content = f"파일: {filename}\n"
                     for col in df.columns:
                         if pd.notna(row[col]):
-                            content += f"{col}: {row[col]}\n"
+                            # 긴 텍스트 자르기
+                            value = str(row[col])[:200]
+                            content += f"{col}: {value}\n"
                     
                     documents.append(Document(
                         page_content=content,
                         metadata={"source": filename, "row_id": idx}
                     ))
+                
+                if len(documents) >= max_documents:
+                    break
         
         return documents
 
@@ -230,10 +240,15 @@ class EnhancedChuncheonChatbot:
             
             if documents:
                 text_splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=1000,
-                    chunk_overlap=200
+                    chunk_size=500,
+                    chunk_overlap=50
                 )
                 splits = text_splitter.split_documents(documents)
+                
+                # 배치 처리로 토큰 제한 방지
+                batch_size = 20
+                if len(splits) > batch_size:
+                    splits = splits[:batch_size]
                 
                 self.vector_store = FAISS.from_documents(
                     documents=splits,
