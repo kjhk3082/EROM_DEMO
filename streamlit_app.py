@@ -290,15 +290,8 @@ class EnhancedChuncheonChatbot:
             self.tavily_api_key = os.getenv("TAVILY_API_KEY")
             
         # Naver Map API 키
-        try:
-            self.naver_client_id = st.secrets["X-NCP-APIGW-API-KEY-ID"]
-        except:
-            self.naver_client_id = os.getenv("X-NCP-APIGW-API-KEY-ID")
-            
-        try:
-            self.naver_client_secret = st.secrets["X-NCP-APIGW-API-KEY"]
-        except:
-            self.naver_client_secret = os.getenv("X-NCP-APIGW-API-KEY")
+        self.naver_client_id = st.secrets.get("X_NCP_APIGW_API_KEY_ID") or os.getenv("X_NCP_APIGW_API_KEY_ID")
+        self.naver_client_secret = st.secrets.get("X_NCP_APIGW_API_KEY") or os.getenv("X_NCP_APIGW_API_KEY")
         
         if not self.perplexity_api_key and not self.tavily_api_key:
             st.warning("⚠️ 웹 검색 API 키가 설정되지 않았습니다. 검색 기능이 제한됩니다.")
@@ -619,7 +612,7 @@ class EnhancedChuncheonChatbot:
                         naver_map_info = f"네이버 지도: {locations[0]}에서 {locations[1]}까지 거리 {distance_km:.1f}km, 소요시간 {duration_min}분"
                         step3.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 네이버 지도 완료</div>""", unsafe_allow_html=True)
                     else:
-                        step3.markdown(f"""<div style='font-size:11px;color:#FF9800;padding:2px 0;'>⚠️ 네이버 지도 조회 실패</div>""", unsafe_allow_html=True)
+                        step3.markdown(f"""<div style='font-size:11px;color:#FF9800;padding:2px 0;'>⚠️ 네이버 지도 조회 실패 (API 키 확인 필요)</div>""", unsafe_allow_html=True)
                 else:
                     step3.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>- 위치 정보 부족</div>""", unsafe_allow_html=True)
             
@@ -668,8 +661,8 @@ class EnhancedChuncheonChatbot:
         try:
             url = "https://maps.apigw.ntruss.com/map-geocode/v2/geocode"
             headers = {
-                "X-NCP-APIGW-API-KEY-ID": self.naver_client_id,
-                "X-NCP-APIGW-API-KEY": self.naver_client_secret
+                "x-ncp-apigw-api-key-id": self.naver_client_id,
+                "x-ncp-apigw-api-key": self.naver_client_secret
             }
             params = {"query": address}
             
@@ -702,8 +695,8 @@ class EnhancedChuncheonChatbot:
             
             url = "https://maps.apigw.ntruss.com/map-direction/v1/driving"
             headers = {
-                "X-NCP-APIGW-API-KEY-ID": self.naver_client_id,
-                "X-NCP-APIGW-API-KEY": self.naver_client_secret
+                "x-ncp-apigw-api-key-id": self.naver_client_id,
+                "x-ncp-apigw-api-key": self.naver_client_secret
             }
             params = {
                 "start": f"{start_coord['lng']},{start_coord['lat']}",
