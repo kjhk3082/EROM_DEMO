@@ -598,6 +598,31 @@ class EnhancedChuncheonChatbot:
             public_data_results = self._get_public_api_results(question)
             step3.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 공공데이터 완료</div>""", unsafe_allow_html=True)
             
+            # 네이버 지도 API 활용 (위치/거리 관련 질문)
+            naver_map_info = ""
+            if any(keyword in question for keyword in ["거리", "길찾기", "위치", "어디", "가는법", "경로"]):
+                step3.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>🗺️ 네이버 지도 조회 중...</div>""", unsafe_allow_html=True)
+                time.sleep(0.3)
+                
+                # 간단한 위치 추출 로직
+                locations = []
+                if "교동초등학교" in question and "한림대" in question:
+                    locations = ["교동초등학교", "한림대학교"]
+                elif "춘천역" in question and "남이섬" in question:
+                    locations = ["춘천역", "남이섬"]
+                
+                if len(locations) == 2:
+                    directions = self._get_naver_directions(locations[0], locations[1])
+                    if directions and 'error' not in directions:
+                        distance_km = directions['distance'] / 1000
+                        duration_min = directions['duration'] // 60000
+                        naver_map_info = f"네이버 지도: {locations[0]}에서 {locations[1]}까지 거리 {distance_km:.1f}km, 소요시간 {duration_min}분"
+                        step3.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 네이버 지도 완료</div>""", unsafe_allow_html=True)
+                    else:
+                        step3.markdown(f"""<div style='font-size:11px;color:#FF9800;padding:2px 0;'>⚠️ 네이버 지도 조회 실패</div>""", unsafe_allow_html=True)
+                else:
+                    step3.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>- 위치 정보 부족</div>""", unsafe_allow_html=True)
+            
             # 4단계: AI 답변 생성
             for i in range(3):
                 thoughts = ["🤖 답변 생성 중...", "💭 정보 분석 중...", "✨ 최종 답변 준비 중..."]
@@ -613,6 +638,8 @@ class EnhancedChuncheonChatbot:
             
             combined_search = "\n\n".join(all_search_results) if all_search_results else "웹 검색 결과 없음"
             combined_info = f"{combined_search}\n\n공공데이터: {public_data_results}"
+            if naver_map_info:
+                combined_info += f"\n\n{naver_map_info}"
             
             # LLM 체인 실행
             response = self.chain.run(
@@ -845,26 +872,31 @@ def main():
         with cols[0]:
             if st.button("🍜 춘천 맛집", key="food_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 맛집 추천해주세요"})
+                st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
                 st.rerun()
         
         with cols[1]:
             if st.button("🎭 문화행사", key="culture_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 문화행사 알려주세요"})
+                st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
                 st.rerun()
         
         with cols[2]:
             if st.button("🏞️ 관광지", key="tour_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 관광지 추천해주세요"})
+                st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
                 st.rerun()
         
         with cols[3]:
             if st.button("🚌 교통정보", key="traffic_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 교통정보 알려주세요"})
+                st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
                 st.rerun()
         
         with cols[4]:
             if st.button("🚗 길찾기", key="direction_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천역에서 남이섬까지 길찾기"})
+                st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
                 st.rerun()
         
         # 채팅 입력
