@@ -740,34 +740,12 @@ def main():
     # 메인 컨테이너
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
     
-    # 로고와 헤더
+    # 간단한 헤더
     st.markdown("""
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px 20px; margin-bottom: 10px; margin-top: -20px;">
-        <!-- 한림대 로고 -->
-        <div style="flex: 1; text-align: left;">
-            <img src="./static/images/hallym_logo.svg" 
-                 alt="한림대학교" style="height: 70px; opacity: 0.9; transition: opacity 0.3s;">
-        </div>
-        
-        <!-- 중앙 헤더 -->
-        <div style="flex: 2; text-align: center;">
-            <div class="main-header">
-                <h1 style="margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                           -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-                           font-size: 2.4rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    🌸 춘천시 AI 도우미 춘이 🌸
-                </h1>
-                <p style="margin: 5px 0 0 0; color: #555; font-size: 1.1rem; font-weight: 500;">
-                    춘천시 관광, 행사, 맛집 정보를 실시간으로 알려드려요!
-                </p>
-            </div>
-        </div>
-        
-        <!-- 춘천시 로고 -->
-        <div style="flex: 1; text-align: right;">
-            <img src="./static/images/chuncheon_logo.svg" 
-                 alt="춘천시" style="height: 70px; opacity: 0.9; transition: opacity 0.3s;">
-        </div>
+    <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 600; color: #333;">
+            🌸 춘천시 AI 도우미 춘이
+        </h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -841,6 +819,25 @@ def main():
                             step4 = st.empty()
                             
                     
+                            # 프롬프트 템플릿 설정
+                            prompt_template = ChatPromptTemplate.from_template("""
+                            당신은 춘천시 전문 AI 도우미 '춘이'입니다. 
+                            
+                            **역할**: 춘천시 관련 모든 질문에 친근하고 도움이 되는 답변을 제공합니다.
+                            **답변 방식**: 
+                            - 춘천시 관련 질문이면 적극적으로 답변
+                            - 공무원, 경찰서장, 시장 등 공직자 정보도 사실 기반으로 제공
+                            - 웹 검색 결과를 우선 활용하되, 로컬 데이터로 보완
+                            - 구체적이고 실용적인 정보 제공 (주소, 전화번호, 운영시간 등)
+                            
+                            **컨텍스트 (로컬 데이터)**: {context}
+                            **웹 검색 결과**: {web_search}
+                            **질문**: {question}
+                            
+                            위 정보를 종합하여 춘천시민과 방문객에게 도움이 되는 친근한 답변을 해주세요.
+                            웹 검색 결과가 있다면 우선 활용하고, 로컬 데이터로 보완해주세요.
+                            """)
+                            
                             # 실제 응답 생성
                             response = chatbot.generate_response_with_steps(user_message, step1, step2, step3, step4)
                             
@@ -865,8 +862,8 @@ def main():
             if st.button("🎭 문화행사 정보", key="culture_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 문화행사 알려주세요"})
                 st.rerun()
-            if st.button("🗺️ 지도로 위치 찾기", key="map_btn"):
-                st.session_state.messages.append({"role": "user", "content": "춘천역 위치를 지도로 보여주세요"})
+            if st.button("🚌 교통정보", key="traffic_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천 교통정보 알려주세요"})
                 st.rerun()
         
         with col2:
