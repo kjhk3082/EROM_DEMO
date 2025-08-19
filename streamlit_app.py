@@ -267,31 +267,38 @@ class EnhancedChuncheonChatbot:
     """RAG 기반 춘천시 챗봇"""
     
     def __init__(self):
-        # API 키 설정
         self.api_key = None
         self.perplexity_api_key = None
+        self.tavily_api_key = None
+        self.naver_client_id = None
+        self.naver_client_secret = None
         
-        # OpenAI API 키 로드 (우선순위: Streamlit secrets > 환경변수)
+        # API 키 로딩 (Streamlit Secrets 우선, 환경변수 후순위)
         try:
             self.api_key = st.secrets["OPENAI_API_KEY"]
         except:
             self.api_key = os.getenv("OPENAI_API_KEY")
-        
-        if not self.api_key:
-            st.error("Streamlit Cloud Secrets에 OPENAI_API_KEY를 설정해주세요.")
-            return
-        
-        # Perplexity API 키 로드
+            
         try:
             self.perplexity_api_key = st.secrets["PERPLEXITY_API_KEY"]
         except:
             self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
-        
-        # Tavily API 키 로드 (백업 검색용)
+            
         try:
             self.tavily_api_key = st.secrets["TAVILY_API_KEY"]
         except:
             self.tavily_api_key = os.getenv("TAVILY_API_KEY")
+            
+        # Naver Map API 키
+        try:
+            self.naver_client_id = st.secrets["X-NCP-APIGW-API-KEY-ID"]
+        except:
+            self.naver_client_id = os.getenv("X-NCP-APIGW-API-KEY-ID")
+            
+        try:
+            self.naver_client_secret = st.secrets["X-NCP-APIGW-API-KEY"]
+        except:
+            self.naver_client_secret = os.getenv("X-NCP-APIGW-API-KEY")
         
         if not self.perplexity_api_key and not self.tavily_api_key:
             st.warning("⚠️ 웹 검색 API 키가 설정되지 않았습니다. 검색 기능이 제한됩니다.")
@@ -555,86 +562,49 @@ class EnhancedChuncheonChatbot:
         import random
         
         try:
-            # 컴팩트한 단계별 표시
-            thinking_dots = [".", "..", "..."]
-            
             # 1단계: 로컬 데이터 검색
             for i in range(2):
-                step1.markdown(f"""
-                <div style="font-size: 11px; color: #666; padding: 2px 0;">
-                    🔍 로컬 데이터 검색{thinking_dots[i]}
-                </div>
-                """, unsafe_allow_html=True)
+                step1.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>🔍 로컬 데이터 검색{'.' * (i+1)}</div>""", unsafe_allow_html=True)
                 time.sleep(0.2)
             
             if hasattr(self.vector_store, 'similarity_search'):
                 relevant_docs = self.vector_store.similarity_search(question, k=5)
             else:
                 relevant_docs = self.vector_store.get_relevant_documents(question)[:5]
-            context = "\n".join([doc.page_content for doc in relevant_docs])
             
-            step1.markdown(f"""
-            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
-                ✓ 로컬 검색 완료 ({len(relevant_docs)}개 문서)
-            </div>
-            """, unsafe_allow_html=True)
+            context = "\n".join([doc.page_content for doc in relevant_docs])
+            step1.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 로컬 검색 완료 ({len(relevant_docs)}개 문서)</div>""", unsafe_allow_html=True)
             
             # 2단계: 웹 검색
-            step2.markdown("""
-            <div style="font-size: 11px; color: #666; padding: 2px 0;">
-                🌐 웹 검색 중...
-            </div>
-            """, unsafe_allow_html=True)
-            time.sleep(0.3)
+            for i in range(3):
+                step2.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>🌐 웹 검색 중{'.' * (i+1)}</div>""", unsafe_allow_html=True)
+                time.sleep(0.3)
             
             web_search_results = self._get_perplexity_search_results(question)
-            
-            # Perplexity 결과가 부족하면 Tavily로 백업 검색
             tavily_results = ""
-            if not web_search_results or "로컬 데이터만 사용합니다" in web_search_results:
-                step2.markdown("""
-                <div style="font-size: 11px; color: #FF9800; padding: 2px 0;">
-                    🔄 백업 검색 중...
-                </div>
-                """, unsafe_allow_html=True)
-                time.sleep(0.3)
-                tavily_results = self._get_tavily_search_results(question)
-                step2.markdown("""
-                <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
-                    ✓ 웹 검색 완료 (백업)
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                step2.markdown("""
-                <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
-                    ✓ 웹 검색 완료
-                </div>
-                """, unsafe_allow_html=True)
             
-            # 3단계: 공공데이터 API
-            step3.markdown("""
-            <div style="font-size: 11px; color: #666; padding: 2px 0;">
-                🏛️ 공공데이터 조회...
-            </div>
-            """, unsafe_allow_html=True)
-            time.sleep(0.2)
+            if not web_search_results or "로컬 데이터만 사용합니다" in web_search_results:
+                step2.markdown(f"""<div style='font-size:11px;color:#FF9800;padding:2px 0;'>🔄 백업 검색 시도 중...</div>""", unsafe_allow_html=True)
+                time.sleep(0.4)
+                tavily_results = self._get_tavily_search_results(question)
+            
+            step2.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 웹 검색 완료</div>""", unsafe_allow_html=True)
+            
+            # 3단계: 공공데이터 조회
+            for i in range(2):
+                step3.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>🏛️ 공공데이터 조회{'.' * (i+1)}</div>""", unsafe_allow_html=True)
+                time.sleep(0.2)
             
             public_data_results = self._get_public_api_results(question)
-            step3.markdown("""
-            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
-                ✓ 공공데이터 완료
-            </div>
-            """, unsafe_allow_html=True)
+            step3.markdown(f"""<div style='font-size:11px;color:#4CAF50;padding:2px 0;'>✓ 공공데이터 완료</div>""", unsafe_allow_html=True)
             
             # 4단계: AI 답변 생성
-            step4.markdown("""
-            <div style="font-size: 11px; color: #666; padding: 2px 0;">
-                🤖 답변 생성 중...
-            </div>
-            """, unsafe_allow_html=True)
-            time.sleep(0.4)
+            for i in range(3):
+                thoughts = ["🤖 답변 생성 중...", "💭 정보 분석 중...", "✨ 최종 답변 준비 중..."]
+                step4.markdown(f"""<div style='font-size:11px;color:#666;padding:2px 0;'>{thoughts[i]}</div>""", unsafe_allow_html=True)
+                time.sleep(0.4)
             
-            # 모든 정보 결합
+            # 검색 결과 통합
             all_search_results = []
             if web_search_results and "로컬 데이터만 사용합니다" not in web_search_results:
                 all_search_results.append(f"Perplexity 검색: {web_search_results}")
@@ -651,17 +621,102 @@ class EnhancedChuncheonChatbot:
                 question=question
             )
             
-            step4.markdown("""
-            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
-                ✓ 답변 완료!
-            </div>
-            """, unsafe_allow_html=True)
-            time.sleep(0.2)
-            
             return response
             
         except Exception as e:
             return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
+    
+    def _get_naver_geocoding(self, address: str) -> dict:
+        """네이버 지오코딩 API로 주소를 좌표로 변환"""
+        if not self.naver_client_id or not self.naver_client_secret:
+            return {}
+        
+        try:
+            url = "https://maps.apigw.ntruss.com/map-geocode/v2/geocode"
+            headers = {
+                "X-NCP-APIGW-API-KEY-ID": self.naver_client_id,
+                "X-NCP-APIGW-API-KEY": self.naver_client_secret
+            }
+            params = {"query": address}
+            
+            response = requests.get(url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('addresses'):
+                    addr = data['addresses'][0]
+                    return {
+                        'lat': float(addr['y']),
+                        'lng': float(addr['x']),
+                        'address': addr['roadAddress'] or addr['jibunAddress']
+                    }
+        except Exception as e:
+            st.error(f"지오코딩 오류: {e}")
+        return {}
+    
+    def _get_naver_directions(self, start: str, goal: str) -> dict:
+        """네이버 길찾기 API로 경로 안내"""
+        if not self.naver_client_id or not self.naver_client_secret:
+            return {}
+        
+        try:
+            # 먼저 주소를 좌표로 변환
+            start_coord = self._get_naver_geocoding(start)
+            goal_coord = self._get_naver_geocoding(goal)
+            
+            if not start_coord or not goal_coord:
+                return {"error": "주소를 찾을 수 없습니다."}
+            
+            url = "https://maps.apigw.ntruss.com/map-direction/v1/driving"
+            headers = {
+                "X-NCP-APIGW-API-KEY-ID": self.naver_client_id,
+                "X-NCP-APIGW-API-KEY": self.naver_client_secret
+            }
+            params = {
+                "start": f"{start_coord['lng']},{start_coord['lat']}",
+                "goal": f"{goal_coord['lng']},{goal_coord['lat']}"
+            }
+            
+            response = requests.get(url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('route') and data['route'].get('traoptimal'):
+                    route = data['route']['traoptimal'][0]
+                    return {
+                        'distance': route['summary']['distance'],
+                        'duration': route['summary']['duration'],
+                        'start_name': start_coord['address'],
+                        'goal_name': goal_coord['address'],
+                        'path': route['path']
+                    }
+        except Exception as e:
+            st.error(f"길찾기 오류: {e}")
+        return {}
+    
+    def _generate_static_map(self, lat: float, lng: float, markers: list = None) -> str:
+        """네이버 정적 지도 URL 생성"""
+        if not self.naver_client_id or not self.naver_client_secret:
+            return ""
+        
+        try:
+            base_url = "https://maps.apigw.ntruss.com/map-static/v2/raster"
+            params = {
+                "w": 400,
+                "h": 300,
+                "center": f"{lng},{lat}",
+                "level": 16,
+                "format": "png"
+            }
+            
+            if markers:
+                marker_str = "|".join([f"type:t|size:mid|pos:{m['lng']} {m['lat']}|label:{m.get('label', '')}" for m in markers])
+                params["markers"] = marker_str
+            
+            # URL 생성 (실제 요청은 브라우저에서)
+            query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+            return f"{base_url}?{query_string}"
+        except Exception as e:
+            st.error(f"지도 생성 오류: {e}")
+        return ""
 
 def initialize_chatbot():
     """RAG 챗봇 초기화 - 캐시 제거로 문제 해결"""
@@ -785,6 +840,7 @@ def main():
                             step3 = st.empty()
                             step4 = st.empty()
                             
+                    
                             # 실제 응답 생성
                             response = chatbot.generate_response_with_steps(user_message, step1, step2, step3, step4)
                             
@@ -798,48 +854,28 @@ def main():
                         st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
                         st.rerun()
         
-        # 빠른 질문 버튼들 (접을 수 있음)
-        with st.expander("🚀 빠른 질문", expanded=True):
-            # 2행 4열로 배치
-            row1_cols = st.columns(4)
-            row2_cols = st.columns(4)
+        # 빠른 질문 버튼들
+        st.markdown("### 🔥 인기 질문")
+        col1, col2 = st.columns(2)
         
-            quick_questions = [
-                "춘천 닭갈비 맛집 추천해줘",
-                "이번 주 춘천 행사 뭐 있어?",
-                "춘천 전기차 충전소 어디 있어?",
-                "춘천 관광지 추천해줘",
-                "춘천시 청년 정책 알려줘",
-                "춘천 카페 추천해줘",
-                "춘천 숙박시설 알려줘",
-                "시청 연락처 알려줘"
-            ]
-            
-            # 첫 번째 행
-            for i, question in enumerate(quick_questions[:4]):
-                with row1_cols[i]:
-                    if st.button(question, key=f"quick_{i}"):
-                        # 사용자 질문 추가
-                        st.session_state.messages.append({"role": "user", "content": question})
-                        
-                        # 애니메이션 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중... 💭✨"})
-                        
-                        # 화면 업데이트하여 로딩 메시지 표시
-                        st.rerun()
-            
-            # 두 번째 행
-            for i, question in enumerate(quick_questions[4:]):
-                with row2_cols[i]:
-                    if st.button(question, key=f"quick_{i+4}"):
-                        # 사용자 질문 추가
-                        st.session_state.messages.append({"role": "user", "content": question})
-                        
-                        # 애니메이션 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중... 💭✨"})
-                        
-                        # 화면 업데이트하여 로딩 메시지 표시
-                        st.rerun()
+        with col1:
+            if st.button("🍜 춘천 맛집 추천", key="food_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천 맛집 추천해주세요"})
+                st.rerun()
+            if st.button("🎭 문화행사 정보", key="culture_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천 문화행사 알려주세요"})
+                st.rerun()
+            if st.button("🗺️ 지도로 위치 찾기", key="map_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천역 위치를 지도로 보여주세요"})
+                st.rerun()
+        
+        with col2:
+            if st.button("🏞️ 관광지 추천", key="tour_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천 관광지 추천해주세요"})
+                st.rerun()
+            if st.button("🚗 길찾기 안내", key="direction_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천역에서 남이섬까지 길찾기"})
+                st.rerun()
         
         # 채팅 입력
         st.markdown("### 💬 직접 질문하기")
