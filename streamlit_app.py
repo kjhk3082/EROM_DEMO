@@ -555,11 +555,17 @@ class EnhancedChuncheonChatbot:
         import random
         
         try:
-            # 1단계: 로컬 데이터 검색 (애니메이션 효과)
+            # 컴팩트한 단계별 표시
             thinking_dots = [".", "..", "..."]
-            for i in range(3):
-                step1.markdown(f"🔍 **1단계:** 로컬 데이터 검색 중{thinking_dots[i]}")
-                time.sleep(0.3)
+            
+            # 1단계: 로컬 데이터 검색
+            for i in range(2):
+                step1.markdown(f"""
+                <div style="font-size: 11px; color: #666; padding: 2px 0;">
+                    🔍 로컬 데이터 검색{thinking_dots[i]}
+                </div>
+                """, unsafe_allow_html=True)
+                time.sleep(0.2)
             
             if hasattr(self.vector_store, 'similarity_search'):
                 relevant_docs = self.vector_store.similarity_search(question, k=5)
@@ -567,56 +573,66 @@ class EnhancedChuncheonChatbot:
                 relevant_docs = self.vector_store.get_relevant_documents(question)[:5]
             context = "\n".join([doc.page_content for doc in relevant_docs])
             
-            step1.markdown("✅ **1단계:** 로컬 데이터 검색 완료 (관련 문서 {}개 발견)".format(len(relevant_docs)))
+            step1.markdown(f"""
+            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                ✓ 로컬 검색 완료 ({len(relevant_docs)}개 문서)
+            </div>
+            """, unsafe_allow_html=True)
             
-            # 2단계: 웹 검색 (실시간 사고 효과)
-            search_thoughts = [
-                "🌐 **2단계:** 인터넷에서 최신 정보를 찾고 있어요...",
-                "🔍 **2단계:** 여러 웹사이트를 검색 중...",
-                "📡 **2단계:** Perplexity AI로 실시간 검색 중..."
-            ]
-            
-            for thought in search_thoughts:
-                step2.markdown(thought)
-                time.sleep(0.4)
+            # 2단계: 웹 검색
+            step2.markdown("""
+            <div style="font-size: 11px; color: #666; padding: 2px 0;">
+                🌐 웹 검색 중...
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.3)
             
             web_search_results = self._get_perplexity_search_results(question)
             
             # Perplexity 결과가 부족하면 Tavily로 백업 검색
             tavily_results = ""
             if not web_search_results or "로컬 데이터만 사용합니다" in web_search_results:
-                step2.markdown("🔄 **2단계:** 다른 검색 엔진으로 재시도 중...")
-                time.sleep(0.5)
-                tavily_results = self._get_tavily_search_results(question)
-                step2.markdown("✅ **2단계:** 웹 검색 완료 (백업 검색 성공)")
-            else:
-                step2.markdown("✅ **2단계:** 웹 검색 완료 (최신 정보 발견!)")
-            
-            # 3단계: 공공데이터 API (사고 과정 표시)
-            api_thoughts = [
-                "🏛️ **3단계:** 춘천시 공식 데이터베이스 접속 중...",
-                "📊 **3단계:** 공공데이터 포털에서 정보 수집 중...",
-                "🔗 **3단계:** API 응답 분석 중..."
-            ]
-            
-            for thought in api_thoughts:
-                step3.markdown(thought)
+                step2.markdown("""
+                <div style="font-size: 11px; color: #FF9800; padding: 2px 0;">
+                    🔄 백업 검색 중...
+                </div>
+                """, unsafe_allow_html=True)
                 time.sleep(0.3)
+                tavily_results = self._get_tavily_search_results(question)
+                step2.markdown("""
+                <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                    ✓ 웹 검색 완료 (백업)
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                step2.markdown("""
+                <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                    ✓ 웹 검색 완료
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # 3단계: 공공데이터 API
+            step3.markdown("""
+            <div style="font-size: 11px; color: #666; padding: 2px 0;">
+                🏛️ 공공데이터 조회...
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.2)
             
             public_data_results = self._get_public_api_results(question)
-            step3.markdown("✅ **3단계:** 공공데이터 조회 완료")
+            step3.markdown("""
+            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                ✓ 공공데이터 완료
+            </div>
+            """, unsafe_allow_html=True)
             
-            # 4단계: AI 답변 생성 (창의적 사고 과정)
-            ai_thoughts = [
-                "🤖 **4단계:** 수집된 정보들을 종합 분석 중...",
-                "💭 **4단계:** 가장 정확하고 유용한 답변을 구성 중...",
-                "✨ **4단계:** 춘천시민에게 도움이 될 답변을 만들고 있어요...",
-                "🎯 **4단계:** 최종 답변을 다듬고 있습니다..."
-            ]
-            
-            for thought in ai_thoughts:
-                step4.markdown(thought)
-                time.sleep(random.uniform(0.3, 0.6))  # 랜덤 딜레이로 자연스러운 효과
+            # 4단계: AI 답변 생성
+            step4.markdown("""
+            <div style="font-size: 11px; color: #666; padding: 2px 0;">
+                🤖 답변 생성 중...
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.4)
             
             # 모든 정보 결합
             all_search_results = []
@@ -635,8 +651,12 @@ class EnhancedChuncheonChatbot:
                 question=question
             )
             
-            step4.markdown("🎉 **4단계:** 완벽한 답변이 준비되었습니다!")
-            time.sleep(0.3)
+            step4.markdown("""
+            <div style="font-size: 11px; color: #4CAF50; padding: 2px 0;">
+                ✓ 답변 완료!
+            </div>
+            """, unsafe_allow_html=True)
+            time.sleep(0.2)
             
             return response
             
@@ -723,13 +743,21 @@ def main():
                     reasoning_container = st.empty()
                     
                     try:
-                        # 단계별 추론 과정 표시
+                        # 단계별 추론 과정 표시 (컴팩트 디자인)
                         with reasoning_container.container():
-                            st.markdown("### 🤔 춘이의 추론 과정")
+                            st.markdown("""
+                            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+                                        border-radius: 12px; padding: 16px; margin: 8px 0; 
+                                        border-left: 4px solid #4CAF50; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 8px;">
+                                    🤔 춘이의 추론 과정
+                                </div>
+                                <div id="reasoning-steps" style="font-size: 12px; line-height: 1.4;">
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
                             
                             step1 = st.empty()
-                            step1.markdown("🔍 **1단계:** 로컬 데이터 검색 중...")
-                            
                             step2 = st.empty()
                             step3 = st.empty()
                             step4 = st.empty()
