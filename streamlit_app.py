@@ -819,25 +819,6 @@ def main():
                             step4 = st.empty()
                             
                     
-                            # 프롬프트 템플릿 설정
-                            prompt_template = ChatPromptTemplate.from_template("""
-                            당신은 춘천시 전문 AI 도우미 '춘이'입니다. 
-                            
-                            **역할**: 춘천시 관련 모든 질문에 친근하고 도움이 되는 답변을 제공합니다.
-                            **답변 방식**: 
-                            - 춘천시 관련 질문이면 적극적으로 답변
-                            - 공무원, 경찰서장, 시장 등 공직자 정보도 사실 기반으로 제공
-                            - 웹 검색 결과를 우선 활용하되, 로컬 데이터로 보완
-                            - 구체적이고 실용적인 정보 제공 (주소, 전화번호, 운영시간 등)
-                            
-                            **컨텍스트 (로컬 데이터)**: {context}
-                            **웹 검색 결과**: {web_search}
-                            **질문**: {question}
-                            
-                            위 정보를 종합하여 춘천시민과 방문객에게 도움이 되는 친근한 답변을 해주세요.
-                            웹 검색 결과가 있다면 우선 활용하고, 로컬 데이터로 보완해주세요.
-                            """)
-                            
                             # 실제 응답 생성
                             response = chatbot.generate_response_with_steps(user_message, step1, step2, step3, step4)
                             
@@ -851,26 +832,32 @@ def main():
                         st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
                         st.rerun()
         
-        # 빠른 질문 버튼들
+        # 빠른 질문 버튼들 (1행 가로 배치)
         st.markdown("### 🔥 인기 질문")
-        col1, col2 = st.columns(2)
+        cols = st.columns(5)
         
-        with col1:
-            if st.button("🍜 춘천 맛집 추천", key="food_btn"):
+        with cols[0]:
+            if st.button("🍜 춘천 맛집", key="food_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 맛집 추천해주세요"})
                 st.rerun()
-            if st.button("🎭 문화행사 정보", key="culture_btn"):
+        
+        with cols[1]:
+            if st.button("🎭 문화행사", key="culture_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 문화행사 알려주세요"})
                 st.rerun()
+        
+        with cols[2]:
+            if st.button("🏞️ 관광지", key="tour_btn"):
+                st.session_state.messages.append({"role": "user", "content": "춘천 관광지 추천해주세요"})
+                st.rerun()
+        
+        with cols[3]:
             if st.button("🚌 교통정보", key="traffic_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천 교통정보 알려주세요"})
                 st.rerun()
         
-        with col2:
-            if st.button("🏞️ 관광지 추천", key="tour_btn"):
-                st.session_state.messages.append({"role": "user", "content": "춘천 관광지 추천해주세요"})
-                st.rerun()
-            if st.button("🚗 길찾기 안내", key="direction_btn"):
+        with cols[4]:
+            if st.button("🚗 길찾기", key="direction_btn"):
                 st.session_state.messages.append({"role": "user", "content": "춘천역에서 남이섬까지 길찾기"})
                 st.rerun()
         
