@@ -329,8 +329,6 @@ def main():
         st.session_state.messages = []
     if 'chatbot_ready' not in st.session_state:
         st.session_state.chatbot_ready = False
-    if 'footer_visible' not in st.session_state:
-        st.session_state.footer_visible = True
     
     # 헤더
     st.markdown("""
@@ -396,18 +394,11 @@ def main():
                         st.session_state.messages.append({"role": "user", "content": question})
                         
                         # 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        with st.spinner("🌸 춘이가 생각중..."):
+                            # AI 응답 생성
+                            response = chatbot.generate_response(question)
+                            st.session_state.messages.append({"role": "assistant", "content": response})
                         
-                        # 화면 업데이트
-                        st.rerun()
-                        
-                        # AI 응답 생성
-                        response = chatbot.generate_response(question)
-                        
-                        # 로딩 메시지를 실제 응답으로 교체
-                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                        
-                        # 최종 업데이트
                         st.rerun()
             
             # 두 번째 행
@@ -418,18 +409,11 @@ def main():
                         st.session_state.messages.append({"role": "user", "content": question})
                         
                         # 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        with st.spinner("🌸 춘이가 생각중..."):
+                            # AI 응답 생성
+                            response = chatbot.generate_response(question)
+                            st.session_state.messages.append({"role": "assistant", "content": response})
                         
-                        # 화면 업데이트
-                        st.rerun()
-                        
-                        # AI 응답 생성
-                        response = chatbot.generate_response(question)
-                        
-                        # 로딩 메시지를 실제 응답으로 교체
-                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
-                        
-                        # 최종 업데이트
                         st.rerun()
         
         # 채팅 입력
@@ -441,35 +425,22 @@ def main():
             st.session_state.messages.append({"role": "user", "content": user_input})
             
             # 로딩 메시지 추가
-            st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
+            with st.spinner("🌸 춘이가 답변을 생성하고 있습니다..."):
+                # AI 응답 생성
+                response = chatbot.generate_response(user_input)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             
-            # 화면 업데이트
-            st.rerun()
-            
-            # AI 응답 생성
-            response = chatbot.generate_response(user_input)
-            
-            # 로딩 메시지를 실제 응답으로 교체
-            st.session_state.messages[-1] = {"role": "assistant", "content": response}
-            
-            # 최종 업데이트
             st.rerun()
     
-    # 하단 춘천시 정보 (토글 가능)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🌸 춘천시 정보" if not st.session_state.footer_visible else "✖️ 닫기", key="footer_toggle"):
-            st.session_state.footer_visible = not st.session_state.footer_visible
-            st.rerun()
-    
-    if st.session_state.footer_visible:
-        st.markdown("""
-        <div class="footer-info">
-            <div>🌸 <strong>춘천시 주요 정보</strong> 🌸</div>
-            <div>닭갈비 · 막국수 · 남이섬 · 소양강댐</div>
-            <div>📞 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788</div>
-        </div>
-        """, unsafe_allow_html=True)
+    # 하단 정보 (항상 표시)
+    st.markdown("""
+    <div class="footer-info">
+        <div>🌸 <strong>춘천시 주요 정보</strong> 🌸</div>
+        <div>닭갈비 · 막국수 · 남이섬 · 소양강댐</div>
+        <div>📞 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788</div>
+        <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
