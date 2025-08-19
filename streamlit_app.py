@@ -392,16 +392,19 @@ def main():
                     if st.button(question, key=f"quick_{i}"):
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
+                        st.rerun()
                         
                         # 로딩 메시지 추가 (채팅에 표시)
                         st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
                         st.rerun()
                         
                         # AI 응답 생성
-                        response = chatbot.generate_response(question)
-                        
-                        # 로딩 메시지를 실제 응답으로 교체
-                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
+                        try:
+                            response = chatbot.generate_response(question)
+                            # 로딩 메시지를 실제 응답으로 교체
+                            st.session_state.messages[-1] = {"role": "assistant", "content": response}
+                        except Exception as e:
+                            st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
                         st.rerun()
             
             # 두 번째 행
@@ -410,16 +413,19 @@ def main():
                     if st.button(question, key=f"quick_{i+4}"):
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
+                        st.rerun()
                         
                         # 로딩 메시지 추가 (채팅에 표시)
                         st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
                         st.rerun()
                         
                         # AI 응답 생성
-                        response = chatbot.generate_response(question)
-                        
-                        # 로딩 메시지를 실제 응답으로 교체
-                        st.session_state.messages[-1] = {"role": "assistant", "content": response}
+                        try:
+                            response = chatbot.generate_response(question)
+                            # 로딩 메시지를 실제 응답으로 교체
+                            st.session_state.messages[-1] = {"role": "assistant", "content": response}
+                        except Exception as e:
+                            st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
                         st.rerun()
         
         # 채팅 입력
@@ -429,16 +435,19 @@ def main():
         if user_input:
             # 사용자 질문 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
+            st.rerun()
             
             # 로딩 메시지 추가 (채팅에 표시)
             st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
             st.rerun()
             
             # AI 응답 생성
-            response = chatbot.generate_response(user_input)
-            
-            # 로딩 메시지를 실제 응답으로 교체
-            st.session_state.messages[-1] = {"role": "assistant", "content": response}
+            try:
+                response = chatbot.generate_response(user_input)
+                # 로딩 메시지를 실제 응답으로 교체
+                st.session_state.messages[-1] = {"role": "assistant", "content": response}
+            except Exception as e:
+                st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
             st.rerun()
     
     # 하단 정보 (항상 표시)
