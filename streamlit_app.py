@@ -95,18 +95,23 @@ st.markdown("""
     
     .footer-info {
         position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 1rem 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 15px 20px;
         text-align: center;
         color: #6b7280;
         font-size: 0.9rem;
-        z-index: 1000;
+        z-index: 9999;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-content {
+        padding-bottom: 120px;
     }
     
     .welcome-box {
@@ -330,6 +335,9 @@ def main():
     if 'chatbot_ready' not in st.session_state:
         st.session_state.chatbot_ready = False
     
+    # 메인 컨테이너
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    
     # 헤더
     st.markdown("""
     <div class="main-header">
@@ -435,28 +443,29 @@ def main():
         if user_input:
             # 사용자 질문 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
-            st.rerun()
-            
-            # 로딩 메시지 추가 (채팅에 표시)
+            # 로딩 메시지 추가
             st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 답변을 생성하고 있습니다..."})
             st.rerun()
             
-            # AI 응답 생성
+            # AI 응답 생성 (백그라운드에서)
             try:
                 response = chatbot.generate_response(user_input)
-                # 로딩 메시지를 실제 응답으로 교체
                 st.session_state.messages[-1] = {"role": "assistant", "content": response}
             except Exception as e:
                 st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
             st.rerun()
     
-    # 하단 정보 (항상 표시)
+    # 메인 컨테이너 닫기
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # 하단 정보 (화면 바닥 고정)
     st.markdown("""
     <div class="footer-info">
         <div>🌸 <strong>춘천시 주요 정보</strong> 🌸</div>
         <div>닭갈비 · 막국수 · 남이섬 · 소양강댐</div>
         <div>📞 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788</div>
-        <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8;">2025 강원 프롬프톤 | 한림대 김재형, 김성호, 김강민</div>
+        <div style="margin-top: 8px; font-size: 0.8rem; opacity: 0.8;">2025 강원 프롬프톤 | 한림대 김재형, 김성호, 김강민</div>
+        <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 5px;">API: apis.data.go.kr/4180000/ccevent, cctour</div>
     </div>
     """, unsafe_allow_html=True)
 
