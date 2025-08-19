@@ -685,11 +685,34 @@ def main():
     # 메인 컨테이너
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
     
-    # 헤더
+    # 로고와 헤더
     st.markdown("""
-    <div class="main-header">
-        <h1>🌸 춘천시 AI 도우미 춘이 🌸</h1>
-        <p>춘천시 관광, 행사, 맛집 정보를 실시간으로 알려드려요!</p>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px 20px; margin-bottom: 10px; margin-top: -20px;">
+        <!-- 한림대 로고 -->
+        <div style="flex: 1; text-align: left;">
+            <img src="./static/images/hallym_logo.svg" 
+                 alt="한림대학교" style="height: 70px; opacity: 0.9; transition: opacity 0.3s;">
+        </div>
+        
+        <!-- 중앙 헤더 -->
+        <div style="flex: 2; text-align: center;">
+            <div class="main-header">
+                <h1 style="margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                           -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+                           font-size: 2.4rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    🌸 춘천시 AI 도우미 춘이 🌸
+                </h1>
+                <p style="margin: 5px 0 0 0; color: #555; font-size: 1.1rem; font-weight: 500;">
+                    춘천시 관광, 행사, 맛집 정보를 실시간으로 알려드려요!
+                </p>
+            </div>
+        </div>
+        
+        <!-- 춘천시 로고 -->
+        <div style="flex: 1; text-align: right;">
+            <img src="./static/images/chuncheon_logo.svg" 
+                 alt="춘천시" style="height: 70px; opacity: 0.9; transition: opacity 0.3s;">
+        </div>
     </div>
     """, unsafe_allow_html=True)
     

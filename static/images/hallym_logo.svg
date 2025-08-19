@@ -1,0 +1,12 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="40" cy="40" r="38" fill="#003876" stroke="#0066CC" stroke-width="4"/>
+  <g transform="translate(15, 15)">
+    <!-- H letter stylized -->
+    <path d="M8 12 L8 38 M8 25 L22 25 M22 12 L22 38" stroke="white" stroke-width="3" fill="none"/>
+    <!-- Wave elements -->
+    <path d="M28 15 Q35 12 42 15 Q35 18 28 15" fill="#00A8FF"/>
+    <path d="M28 25 Q35 22 42 25 Q35 28 28 25" fill="#0066CC"/>
+    <path d="M28 35 Q35 32 42 35 Q35 38 28 35" fill="#00A8FF"/>
+  </g>
+  <text x="40" y="65" font-family="Arial, sans-serif" font-size="8" fill="white" text-anchor="middle" font-weight="bold">HALLYM</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="40" cy="40" r="38" fill="#00A8FF" stroke="#0088CC" stroke-width="4"/>
+  <g transform="translate(12, 12)">
+    <!-- Stylized C for Chuncheon -->
+    <path d="M28 15 C20 15 15 20 15 28 C15 36 20 41 28 41 C32 41 35 39 37 36" 
+          stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Mountain/wave elements representing nature -->
+    <path d="M8 45 L12 40 L16 45 L20 40 L24 45 L28 40 L32 45 L36 40 L40 45 L44 40 L48 45" 
+          stroke="white" stroke-width="2" fill="none"/>
+    <!-- Small heart representing love for the city -->
+    <path d="M42 18 C44 16 47 16 49 18 C51 16 54 16 56 18 C56 22 49 28 49 28 C49 28 42 22 42 18 Z" 
+          fill="white"/>
+  </g>
+  <text x="40" y="68" font-family="Arial, sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="bold">CHUNCHEON</text>
+</svg>
