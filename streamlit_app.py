@@ -543,6 +543,75 @@ class EnhancedChuncheonChatbot:
             
         except Exception as e:
             return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
+    
+    def generate_response_with_steps(self, question: str, step1, step2, step3, step4) -> str:
+        """단계별 추론 과정을 보여주며 응답 생성"""
+        import time
+        
+        try:
+            # 1단계: 로컬 데이터 검색
+            step1.markdown("🔍 **1단계:** 로컬 데이터 검색 중...")
+            time.sleep(0.5)
+            
+            if hasattr(self.vector_store, 'similarity_search'):
+                relevant_docs = self.vector_store.similarity_search(question, k=5)
+            else:
+                relevant_docs = self.vector_store.get_relevant_documents(question)[:5]
+            context = "\n".join([doc.page_content for doc in relevant_docs])
+            
+            step1.markdown("✅ **1단계:** 로컬 데이터 검색 완료 (관련 문서 {}개 발견)".format(len(relevant_docs)))
+            
+            # 2단계: 웹 검색
+            step2.markdown("🌐 **2단계:** Perplexity 웹 검색 중...")
+            time.sleep(0.5)
+            
+            web_search_results = self._get_perplexity_search_results(question)
+            
+            # Perplexity 결과가 부족하면 Tavily로 백업 검색
+            tavily_results = ""
+            if not web_search_results or "로컬 데이터만 사용합니다" in web_search_results:
+                step2.markdown("🔄 **2단계:** Tavily 백업 검색 중...")
+                time.sleep(0.5)
+                tavily_results = self._get_tavily_search_results(question)
+                step2.markdown("✅ **2단계:** 웹 검색 완료 (Tavily 백업 사용)")
+            else:
+                step2.markdown("✅ **2단계:** 웹 검색 완료 (Perplexity)")
+            
+            # 3단계: 공공데이터 API
+            step3.markdown("🏛️ **3단계:** 춘천시 공공데이터 조회 중...")
+            time.sleep(0.5)
+            
+            public_data_results = self._get_public_api_results(question)
+            step3.markdown("✅ **3단계:** 공공데이터 조회 완료")
+            
+            # 4단계: AI 답변 생성
+            step4.markdown("🤖 **4단계:** AI 답변 생성 중...")
+            time.sleep(0.5)
+            
+            # 모든 정보 결합
+            all_search_results = []
+            if web_search_results and "로컬 데이터만 사용합니다" not in web_search_results:
+                all_search_results.append(f"Perplexity 검색: {web_search_results}")
+            if tavily_results:
+                all_search_results.append(f"Tavily 검색: {tavily_results}")
+            
+            combined_search = "\n\n".join(all_search_results) if all_search_results else "웹 검색 결과 없음"
+            combined_info = f"{combined_search}\n\n공공데이터: {public_data_results}"
+            
+            # LLM 체인 실행
+            response = self.chain.run(
+                context=context,
+                web_search=combined_info,
+                question=question
+            )
+            
+            step4.markdown("✅ **4단계:** AI 답변 생성 완료!")
+            time.sleep(0.5)
+            
+            return response
+            
+        except Exception as e:
+            return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
 
 def initialize_chatbot():
     """RAG 챗봇 초기화 - 캐시 제거로 문제 해결"""
@@ -608,7 +677,9 @@ def main():
             # 로딩 중인 메시지가 있으면 응답 생성
             if (st.session_state.messages and 
                 st.session_state.messages[-1]["role"] == "assistant" and 
-                "생각중" in st.session_state.messages[-1]["content"]):
+                ("생각중" in st.session_state.messages[-1]["content"] or 
+                 "답변을 생성하고 있습니다" in st.session_state.messages[-1]["content"] or
+                 "💭✨" in st.session_state.messages[-1]["content"])):
                 
                 # 마지막 사용자 메시지 찾기
                 user_message = None
@@ -618,11 +689,31 @@ def main():
                         break
         
                 if user_message:
+                    # 추론 과정 표시용 컨테이너
+                    reasoning_container = st.empty()
+                    
                     try:
-                        response = chatbot.generate_response(user_message)
+                        # 단계별 추론 과정 표시
+                        with reasoning_container.container():
+                            st.markdown("### 🤔 춘이의 추론 과정")
+                            
+                            step1 = st.empty()
+                            step1.markdown("🔍 **1단계:** 로컬 데이터 검색 중...")
+                            
+                            step2 = st.empty()
+                            step3 = st.empty()
+                            step4 = st.empty()
+                            
+                            # 실제 응답 생성
+                            response = chatbot.generate_response_with_steps(user_message, step1, step2, step3, step4)
+                            
+                        # 추론 과정 숨기고 최종 답변만 표시
+                        reasoning_container.empty()
                         st.session_state.messages[-1] = {"role": "assistant", "content": response}
                         st.rerun()
+                        
                     except Exception as e:
+                        reasoning_container.empty()
                         st.session_state.messages[-1] = {"role": "assistant", "content": f"죄송합니다. 오류가 발생했습니다: {str(e)}"}
                         st.rerun()
         
@@ -650,8 +741,8 @@ def main():
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
                         
-                        # 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        # 애니메이션 로딩 메시지 추가
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중... 💭✨"})
                         
                         # 화면 업데이트하여 로딩 메시지 표시
                         st.rerun()
@@ -663,8 +754,8 @@ def main():
                         # 사용자 질문 추가
                         st.session_state.messages.append({"role": "user", "content": question})
                         
-                        # 로딩 메시지 추가
-                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중..."})
+                        # 애니메이션 로딩 메시지 추가
+                        st.session_state.messages.append({"role": "assistant", "content": "🌸 춘이가 생각중... 💭✨"})
                         
                         # 화면 업데이트하여 로딩 메시지 표시
                         st.rerun()
