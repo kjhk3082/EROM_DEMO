@@ -439,7 +439,11 @@ class EnhancedChuncheonChatbot:
         """질문에 대한 응답 생성"""
         try:
             # 벡터 스토어에서 관련 문서 검색
-            relevant_docs = self.vector_store.similarity_search(question, k=5)
+            if hasattr(self.vector_store, 'similarity_search'):
+                relevant_docs = self.vector_store.similarity_search(question, k=5)
+            else:
+                # VectorStoreRetriever 객체인 경우
+                relevant_docs = self.vector_store.get_relevant_documents(question)[:5]
             context = "\n".join([doc.page_content for doc in relevant_docs])
             
             # Perplexity 웹 검색 결과 가져오기
