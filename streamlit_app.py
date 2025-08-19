@@ -11,7 +11,7 @@ from typing import List, Dict, Any
 # AI 라이브러리 import
 try:
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-    from langchain_community.vectorstores import Chroma
+    from langchain_community.vectorstores import FAISS
     from langchain_community.retrievers import TavilySearchAPIRetriever
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.runnables import RunnablePassthrough, RunnableLambda
@@ -235,7 +235,7 @@ class EnhancedChuncheonChatbot:
                 )
                 splits = text_splitter.split_documents(documents)
                 
-                self.vector_store = Chroma.from_documents(
+                self.vector_store = FAISS.from_documents(
                     documents=splits,
                     embedding=self.embeddings
                 )
