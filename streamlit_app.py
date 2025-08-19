@@ -346,22 +346,12 @@ def main():
             </div>
             """, unsafe_allow_html=True)
         
-        # 채팅 메시지 표시
-        for message in st.session_state.messages:
-            if message["role"] == "user":
-                st.markdown(f"""
-                <div class="chat-message user-message">
-                    <strong>👤 사용자:</strong><br>
-                    {message["content"]}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class="chat-message bot-message">
-                    <strong>🤖 춘이:</strong><br>
-                    {message["content"]}
-                </div>
-                """, unsafe_allow_html=True)
+        # 채팅 기록 표시
+        chat_container = st.container()
+        with chat_container:
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
         
         # 빠른 질문 버튼들
         st.markdown("### 🚀 빠른 질문")
@@ -415,10 +405,10 @@ def main():
             # 사용자 메시지 추가
             st.session_state.messages.append({"role": "user", "content": user_input})
             
-            with st.chat_message("assistant"):
-                with st.spinner("춘이가 답변을 생성하고 있습니다..."):
-                    response = chatbot.generate_response(user_input)
-                st.write(response)
+            # AI 응답 생성 및 세션에 저장
+            with st.spinner("춘이가 답변을 생성하고 있습니다..."):
+                response = chatbot.generate_response(user_input)
+                st.session_state.messages.append({"role": "assistant", "content": response})
             
             st.rerun()
     
@@ -427,7 +417,14 @@ def main():
     <div class="footer-info">
         <p>🌸 <strong>춘천시 AI 도우미 춘이</strong> - 2025년 프롬프톤 출품작 🌸</p>
         <p>개발팀: 김재형(팀장), 김성호, 김강민 | 한림대학교</p>
-        <p>🏛️ 춘천시청: 033-250-3000 | 🚂 춘천역: 1544-7788 | 🍗 특산품: 닭갈비, 막국수</p>
+        <p>🏛️ 춘천시 주요 정보:
+- 닭갈비: 춘천의 대표 음식, 중앙로 일대에 많은 맛집
+- 막국수: 춘천의 또 다른 특산품
+- 남이섬: 대표적인 관광지
+- 소양강댐: 춘천의 랜드마크
+- 춘천시청: 033-250-3000
+- 강원대학교: 춘천캠퍼스 위치, 총장은 김헌영 (2023년 기준)
+- 한림대학교: 춘천시 한림대학길 1 위치 | 🚂 춘천역: 1544-7788 | 🍗 특산품: 닭갈비, 막국수</p>
     </div>
     """, unsafe_allow_html=True)
 
