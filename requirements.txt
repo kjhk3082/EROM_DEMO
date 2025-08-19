@@ -15,6 +15,7 @@ numpy
 requests
 python-dotenv>=0.2.32
 langchain-text-splitters>=0.2.0
+tavily-python>=0.3.0
 
 # 데이터 처리 (Python 3.13 빌드 오류 해결)
 pandas>=2.2.0

@@ -23,6 +23,12 @@ from dotenv import load_dotenv
 # .env 파일 로드
 load_dotenv()
 
+# Tavily 검색 추가
+try:
+    from langchain_community.tools.tavily_search import TavilySearchResults
+except ImportError:
+    TavilySearchResults = None
+
 # AI 라이브러리 import
 try:
     from langchain_core.prompts import ChatPromptTemplate
@@ -281,8 +287,14 @@ class EnhancedChuncheonChatbot:
         except:
             self.perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
         
-        if not self.perplexity_api_key:
-            st.warning("Perplexity API 키가 설정되지 않았습니다. 웹 검색 기능이 제한됩니다.")
+        # Tavily API 키 로드 (백업 검색용)
+        try:
+            self.tavily_api_key = st.secrets["TAVILY_API_KEY"]
+        except:
+            self.tavily_api_key = os.getenv("TAVILY_API_KEY")
+        
+        if not self.perplexity_api_key and not self.tavily_api_key:
+            st.warning("⚠️ 웹 검색 API 키가 설정되지 않았습니다. 검색 기능이 제한됩니다.")
         
         # 임베딩 및 LLM 초기화
         try:
@@ -420,6 +432,41 @@ class EnhancedChuncheonChatbot:
         except Exception as e:
             return "웹 검색을 사용할 수 없습니다. 로컬 데이터만 사용합니다."
     
+    def _get_tavily_search_results(self, query: str) -> str:
+        """Tavily API를 사용한 백업 웹 검색"""
+        if not self.tavily_api_key or not TavilySearchResults:
+            return ""
+        
+        try:
+            tavily_search = TavilySearchResults(
+                max_results=3,
+                search_depth="advanced",
+                include_answer=True,
+                include_raw_content=False,
+                include_images=False,
+                api_key=self.tavily_api_key
+            )
+            
+            # 춘천 관련 검색어로 강화
+            enhanced_query = f"춘천시 {query} 2024 2025"
+            results = tavily_search.run(enhanced_query)
+            
+            if results:
+                formatted_results = []
+                for result in results[:3]:
+                    if isinstance(result, dict):
+                        title = result.get('title', '')
+                        content = result.get('content', '')
+                        if title and content:
+                            formatted_results.append(f"**{title}**\n{content}")
+                
+                return "\n\n".join(formatted_results) if formatted_results else ""
+            
+            return ""
+            
+        except Exception as e:
+            return ""
+    
     def _get_public_api_results(self, query: str) -> str:
         """춘천시 공공데이터 API 결과 가져오기"""
         try:
@@ -467,11 +514,23 @@ class EnhancedChuncheonChatbot:
             # Perplexity 웹 검색 결과 가져오기
             web_search_results = self._get_perplexity_search_results(question)
             
+            # Perplexity 결과가 부족하면 Tavily로 백업 검색
+            tavily_results = ""
+            if not web_search_results or "로컬 데이터만 사용합니다" in web_search_results:
+                tavily_results = self._get_tavily_search_results(question)
+            
             # 공공데이터 API 결과 가져오기
             public_data_results = self._get_public_api_results(question)
             
             # 모든 정보 결합
-            combined_info = f"{web_search_results}\n\n공공데이터: {public_data_results}"
+            all_search_results = []
+            if web_search_results and "로컬 데이터만 사용합니다" not in web_search_results:
+                all_search_results.append(f"Perplexity 검색: {web_search_results}")
+            if tavily_results:
+                all_search_results.append(f"Tavily 검색: {tavily_results}")
+            
+            combined_search = "\n\n".join(all_search_results) if all_search_results else "웹 검색 결과 없음"
+            combined_info = f"{combined_search}\n\n공공데이터: {public_data_results}"
             
             # LLM 체인 실행
             response = self.chain.run(
