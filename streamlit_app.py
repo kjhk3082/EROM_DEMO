@@ -284,9 +284,8 @@ class EnhancedChuncheonChatbot:
         except Exception as e:
             return f"죄송합니다. 답변 생성 중 문제가 발생했습니다: {str(e)}"
 
-@st.cache_resource
 def initialize_chatbot():
-    """RAG 챗봇 초기화 - 캐싱으로 최적화"""
+    """RAG 챗봇 초기화 - 캐시 제거로 문제 해결"""
     try:
         with st.spinner("🚀 춘천시 RAG 챗봇 초기화 중..."):
             chatbot = EnhancedChuncheonChatbot()
